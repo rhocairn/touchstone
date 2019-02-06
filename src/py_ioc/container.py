@@ -109,26 +109,40 @@ class Container(AbstractContainer):
             parent_name=parent_name,
         )
 
-    def make(self, abstract: TAbstract, init_kwargs=None) -> Any:
+    def make(self, abstract: TAbstract, init_kwargs: dict = None) -> Any:
         """
-        Make an instance of `abstract` and return it, obeying all registered binding rules.
-        If `init_kwargs` is specified, it will overrule any bindings that have been registered and if `abstract`
-        was registered as a singleton, the instance will NOT be saved as a singleton.
-        `abstract` may also be any callable, so this could be used to call a function with automatic fulfillment of its args.
+        Make an instance of `abstract` and return it, obeying registered binding rules.
+
+        If `init_kwargs` is specified, it will overrule any bindings that have
+        been registered and if `abstract` was registered as a singleton, the
+        instance will NOT be saved as a singleton.
+
+        `abstract` may also be any callable, so this could be used to call a
+        function with automatic fulfillment of its args.
         """
         return self._make(abstract, init_kwargs, None, None)
 
-    def _make(self, abstract: TAbstract, init_kwargs, parent: Optional[TAbstract], parent_name: Optional[str]) -> Any:
+    def _make(self,
+              abstract: TAbstract,
+              init_kwargs: dict,
+              parent: Optional[TAbstract],
+              parent_name: Optional[str],
+              ) -> Any:
         if init_kwargs is None:
             init_kwargs = {}
 
-        binding = self._resolve_binding(abstract, parent, parent_name)
-        if binding in self._instances:
+        if init_kwargs:
+            binding = self._make_auto_binding(abstract)
+        else:
+            binding = self._resolve_binding(abstract, parent, parent_name)
+
+        if not init_kwargs and binding in self._instances:
             return self._instances[binding]
 
         fulfilled_params = self._resolve_params(binding, init_kwargs)
         instance = binding.make(fulfilled_params)
-        if binding.lifetime_strategy == SINGLETON:
+
+        if not init_kwargs and binding.lifetime_strategy == SINGLETON:
             self._instances[binding] = instance
         return instance
 
@@ -145,10 +159,15 @@ class Container(AbstractContainer):
         if abstract in self._bindings:
             return self._bindings[abstract]
 
+        try:
+            return self._make_auto_binding(abstract)
+        except TypeError:
+            raise TypeError("Can't fulfill parameter {}.{}: {}".format(parent, name, abstract))
+
+    def _make_auto_binding(self, abstract: TAbstract) -> AutoBinding:
         if callable(abstract) and not inspect.isabstract(abstract):
             return AutoBinding(abstract, abstract)
-
-        raise TypeError("Can't fulfill parameter {}.{}: {}".format(parent, name, abstract))
+        raise TypeError("Can't fulfill binding for {}".format(abstract))
 
     def _resolve_contextual_binding(self, abstract, parent, name):
         if abstract is inspect._empty:

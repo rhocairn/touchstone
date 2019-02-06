@@ -304,3 +304,19 @@ class TestContainer:
         container = Container()
         y = container.make(Y)
         assert isinstance(y.x, X)
+
+    def test_make_does_not_save_singleton_if_explicit_init_kwargs_set(self):
+        class X:
+            def __init__(self, foo: str):
+                self.foo = foo
+
+        container = Container()
+        container.bind(X, lambda: X('foo'), SINGLETON)
+        x1 = container.make(X)
+        x2 = container.make(X, {'foo': 'bar'})
+        x3 = container.make(X)
+
+        assert x1.foo == 'foo'
+        assert x3 is x1
+        assert x2.foo == 'bar'
+        assert x2 is not x1
