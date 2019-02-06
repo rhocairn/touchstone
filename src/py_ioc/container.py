@@ -1,6 +1,6 @@
 import abc
 import inspect
-from typing import (  # noqa: F401
+from typing import (
     Any,
     Dict,
     Optional,
@@ -8,9 +8,9 @@ from typing import (  # noqa: F401
 )
 
 from py_ioc.bindings import (
-    AbstractBinding,
     AutoBinding,
-    Binding,
+    TBinding,
+    SimpleBinding,
     ContextualBinding,
     NEW_EVERY_TIME,
     SINGLETON,
@@ -63,9 +63,9 @@ class Container(AbstractContainer):
     """
 
     def __init__(self):
-        self._bindings = {}  # type: Dict[TAbstract, Binding]
-        self._instances = {}  # type: Dict[AbstractBinding, Any]
-        self._contextual_bindings = {}  # type: Dict[Tuple[Optional[TAbstract], TAbstract, Optional[str]], ContextualBinding]  # noqa: E501
+        self._bindings: Dict[TAbstract, TBinding] = {}
+        self._instances: Dict[TBinding, Any] = {}
+        self._contextual_bindings: Dict[Tuple[Optional[TAbstract], TAbstract, Optional[str]], ContextualBinding] = {}
         self.bind_instance(Container, self)
 
     def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy=NEW_EVERY_TIME) -> None:
@@ -73,16 +73,16 @@ class Container(AbstractContainer):
         Bind an `abstract` (an annotation) to a `concrete` (something which returns objects fulfilling that annotation).
         If `lifetime_strategy` is set to `SINGLETON` then only one instance of the concrete implementation will be used.
         """
-        self._bindings[abstract] = Binding(abstract, concrete, lifetime_strategy)
+        self._bindings[abstract] = SimpleBinding(abstract, concrete, lifetime_strategy)
 
-    def bind_instance(self, abstract: TAbstract, instance: object) -> None:
+    def bind_instance(self, abstract: TAbstract, instance: Any) -> None:
         """
         A helper for binding an instance of an object as a singleton in the container.
         This is only useful if you've already created the singleton and want to bind it.
         If you have a method that returns a valid instance of the object, then use `bind` with
         `lifetime_strategy=SINGLETON` instead.
         """
-        self._bindings[abstract] = Binding(abstract, lambda: instance, SINGLETON)
+        self.bind(abstract, lambda: instance, SINGLETON)
 
     def bind_contextual(self, *,
                         when: TAbstract,
@@ -120,6 +120,8 @@ class Container(AbstractContainer):
         `abstract` may also be any callable, so this could be used to call a
         function with automatic fulfillment of its args.
         """
+        if init_kwargs is None:
+            init_kwargs = {}
         return self._make(abstract, init_kwargs, None, None)
 
     def _make(self,
@@ -128,9 +130,6 @@ class Container(AbstractContainer):
               parent: Optional[TAbstract],
               parent_name: Optional[str],
               ) -> Any:
-        if init_kwargs is None:
-            init_kwargs = {}
-
         if init_kwargs:
             binding = self._make_auto_binding(abstract)
         else:
@@ -147,10 +146,10 @@ class Container(AbstractContainer):
         return instance
 
     def _resolve_binding(self,
-                         abstract: Optional[TAbstract],
+                         abstract: TAbstract,
                          parent: Optional[TAbstract],
                          name: Optional[str],
-                         ) -> AbstractBinding:
+                         ) -> TBinding:
         if parent is not None:
             binding = self._resolve_contextual_binding(abstract, parent, name)
             if binding:
@@ -164,7 +163,7 @@ class Container(AbstractContainer):
         except TypeError:
             raise TypeError("Can't fulfill parameter {}.{}: {}".format(parent, name, abstract))
 
-    def _make_auto_binding(self, abstract: TAbstract) -> AutoBinding:
+    def _make_auto_binding(self, abstract: TAbstract) -> TBinding:
         if callable(abstract) and not inspect.isabstract(abstract):
             return AutoBinding(abstract, abstract)
         raise TypeError("Can't fulfill binding for {}".format(abstract))
@@ -186,7 +185,7 @@ class Container(AbstractContainer):
                 ))
             return binding
 
-    def _resolve_params(self, binding: AbstractBinding, init_kwargs: Dict[str, Any]):
+    def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]):
         needed_params = binding.get_concrete_params()
         fulfilled_params = {}
         for name, annotation in needed_params.items():

@@ -53,6 +53,21 @@ class AbstractBinding(abc.ABC):
         }
 
 
+class SimpleBinding(AbstractBinding):
+    def __init__(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str) -> None:
+        if is_builtin(abstract):
+            raise TypeError("Cannot bind builtin type {}".format(abstract))
+        self.abstract = abstract
+        self.concrete = concrete  # type: ignore
+        self.lifetime_strategy = lifetime_strategy
+
+    def is_contextual(self) -> bool:
+        return False
+
+    def __hash__(self) -> int:
+        return hash((self.abstract, self.concrete, self.lifetime_strategy))
+
+
 class AutoBinding(AbstractBinding):
     lifetime_strategy = NEW_EVERY_TIME
 
@@ -69,21 +84,6 @@ class AutoBinding(AbstractBinding):
 
     def __hash__(self) -> int:
         return hash((self.abstract, self.concrete))
-
-
-class Binding(AbstractBinding):
-    def __init__(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str) -> None:
-        if is_builtin(abstract):
-            raise TypeError("Cannot bind builtin type {}".format(abstract))
-        self.abstract = abstract
-        self.concrete = concrete  # type: ignore
-        self.lifetime_strategy = lifetime_strategy
-
-    def is_contextual(self) -> bool:
-        return False
-
-    def __hash__(self) -> int:
-        return hash((self.abstract, self.concrete, self.lifetime_strategy))
 
 
 class ContextualBinding(AbstractBinding):
@@ -103,3 +103,6 @@ class ContextualBinding(AbstractBinding):
     def __hash__(self) -> int:
         hash_data = (self.abstract, self.concrete, self.lifetime_strategy, self.parent, self.parent_name)
         return hash(hash_data)
+
+
+TBinding = typing.Union[AutoBinding, SimpleBinding, ContextualBinding]
