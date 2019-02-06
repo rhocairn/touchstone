@@ -7,6 +7,8 @@ from typing import (  # noqa: F401
 )
 
 from py_ioc.bindings import (
+    AbstractBinding,
+    AutoBinding,
     Binding,
     ContextualBinding,
     NEW_EVERY_TIME,
@@ -19,7 +21,7 @@ from py_ioc.bindings import (
 class Container:
     def __init__(self):
         self._bindings = {}  # type: Dict[TAbstract, Binding]
-        self._instances = {}  # type: Dict[Binding, Any]
+        self._instances = {}  # type: Dict[AbstractBinding, Any]
         self._contextual_bindings = {}  # type: Dict[Tuple[Optional[TAbstract], TAbstract, Optional[str]], ContextualBinding]  # noqa: E501
         self.bind_instance(Container, self)
 
@@ -71,7 +73,7 @@ class Container:
                          abstract: Optional[TAbstract],
                          parent: Optional[TAbstract],
                          name: Optional[str],
-                         ) -> Binding:
+                         ) -> AbstractBinding:
         if parent is not None:
             binding = self._resolve_contextual_binding(abstract, parent, name)
             if binding:
@@ -79,8 +81,9 @@ class Container:
 
         if abstract in self._bindings:
             return self._bindings[abstract]
+
         if callable(abstract) and not inspect.isabstract(abstract):
-            return Binding(abstract, abstract, NEW_EVERY_TIME)
+            return AutoBinding(abstract, abstract)
 
         raise TypeError("Can't fulfill parameter {}.{}: {}".format(parent, name, abstract))
 
@@ -101,7 +104,7 @@ class Container:
                 ))
             return binding
 
-    def _resolve_params(self, binding: Binding, init_kwargs: Dict[str, Any]):
+    def _resolve_params(self, binding: AbstractBinding, init_kwargs: Dict[str, Any]):
         needed_params = binding.get_concrete_params()
         fulfilled_params = {}
         for name, annotation in needed_params.items():

@@ -1,4 +1,4 @@
-FROM debian:stretch AS py34567
+FROM debian:stretch AS py367
 
 ENV PYENV_ROOT="/.pyenv" \
     PATH="/.pyenv/bin:/.pyenv/shims:$PATH"
@@ -29,8 +29,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN git clone https://github.com/pyenv/pyenv.git /.pyenv \
-    && pyenv install 3.4.9 \
-    && pyenv install 3.5.6 \
     && pyenv install 3.6.8 \
     && pyenv install 3.7.2 \
     && pyenv global $(pyenv versions --bare) \
@@ -38,7 +36,7 @@ RUN git clone https://github.com/pyenv/pyenv.git /.pyenv \
 
 
 
-FROM py34567 AS app
+FROM py367 AS app
 
 COPY ./src/py_ioc/__init__.py /app/src/py_ioc/
 COPY ./src/py_ioc/version.py /app/src/py_ioc/

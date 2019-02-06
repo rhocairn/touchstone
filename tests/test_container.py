@@ -1,4 +1,13 @@
 import abc
+import sys
+from collections import namedtuple
+from typing import (
+    Callable,
+    IO,
+    List,
+    Type,
+    TypeVar,
+)
 
 import pytest
 
@@ -90,7 +99,7 @@ class TestContainer:
         container.bind('n', make_n)
         assert container.make(X).arg == 5
 
-    def test_make_is_not_caching(self):
+    def test_make_is_not_caching_instances(self):
         class X:
             pass
 
@@ -196,20 +205,28 @@ class TestContainer:
         assert y.x1.foo == 'bar1'
         assert y.x2.foo == 'bar2'
 
-    @pytest.mark.parametrize('typ', [str, bytes, int, float, complex, dict, tuple, list])
+    @pytest.mark.parametrize('typ', [str, bytes, int, bool, bytearray, float, complex, dict, tuple, list, set,
+                                     frozenset, property, range, slice, object, namedtuple])
     def test_make_does_not_create_primitive_types(self, typ):
         container = Container()
         with pytest.raises(TypeError):
             container.make(typ)
 
-    def test_make_does_not_create_primitive_types_2(self):
+    @pytest.mark.parametrize('typ', [List[object], Type[int], TypeVar('T', int, float), Callable, IO])
+    def test_make_does_not_create_typing_hints(self, typ):
+        container = Container()
+        with pytest.raises(TypeError):
+            container.make(typ)
+
+    def test_make_contextual_with_builtin_type(self):
         class X:
             def __init__(self, foo: str):
                 self.foo = foo
 
         container = Container()
-        with pytest.raises(TypeError):
-            container.make(X)
+        container.bind_contextual(when=X, wants=str, called='foo', give=lambda: 'bar')
+        x = container.make(X)
+        assert x.foo == 'bar'
 
     def test_make_does_not_support_varname_only_binding_if_annotations_used(self):
         class X:
@@ -272,3 +289,18 @@ class TestContainer:
         y2 = container.make(Y)
         assert y1.x is not x1
         assert y1.x is y2.x
+
+    @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires dataclasses, added in python3.7")
+    def test_make_supports_dataclasses(self):
+        from dataclasses import dataclass
+
+        class X:
+            pass
+
+        @dataclass
+        class Y:
+            x: X
+
+        container = Container()
+        y = container.make(Y)
+        assert isinstance(y.x, X)
