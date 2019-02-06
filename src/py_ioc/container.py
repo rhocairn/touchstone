@@ -1,3 +1,4 @@
+import abc
 import inspect
 from typing import (  # noqa: F401
     Any,
@@ -18,7 +19,49 @@ from py_ioc.bindings import (
 )
 
 
-class Container:
+class AbstractContainer(abc.ABC):
+    @abc.abstractmethod
+    def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str) -> None:
+        pass
+
+    @abc.abstractmethod
+    def bind_instance(self, abstract: TAbstract, instance: object) -> None:
+        pass
+
+    @abc.abstractmethod
+    def bind_contextual(self, *,
+                        when: TAbstract,
+                        wants: Optional[TAbstract] = None,
+                        called: Optional[str] = None,
+                        give: TConcrete,
+                        lifetime_strategy: str = NEW_EVERY_TIME
+                        ) -> None:
+        pass
+
+
+class Container(AbstractContainer):
+    """
+    The `Container`. It supports binding and resolving dependencies.
+
+    In intent, it binds abstract class `__init__` dependencies (declared via function annotations) to
+    concrete implementations of those dependencies.
+
+    What counts as an `abstract` is any hashable you might use as an annotation. For example:
+
+        * An `abc.ABC` abstract base class
+        * Any class
+        * A string
+        * A typehint using `typing
+
+    What counts as a `concrete` is any callable that returns something that satisfies the dependency. For example:
+
+        * A concrete implementation of an `abc.ABC`
+        * A subclass
+        * Any class
+        * A lambda or function which acts as a factory function
+        * A classmethod acting as a factory function
+    """
+
     def __init__(self):
         self._bindings = {}  # type: Dict[TAbstract, Binding]
         self._instances = {}  # type: Dict[AbstractBinding, Any]
@@ -26,9 +69,19 @@ class Container:
         self.bind_instance(Container, self)
 
     def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy=NEW_EVERY_TIME) -> None:
+        """
+        Bind an `abstract` (an annotation) to a `concrete` (something which returns objects fulfilling that annotation).
+        If `lifetime_strategy` is set to `SINGLETON` then only one instance of the concrete implementation will be used.
+        """
         self._bindings[abstract] = Binding(abstract, concrete, lifetime_strategy)
 
     def bind_instance(self, abstract: TAbstract, instance: object) -> None:
+        """
+        A helper for binding an instance of an object as a singleton in the container.
+        This is only useful if you've already created the singleton and want to bind it.
+        If you have a method that returns a valid instance of the object, then use `bind` with
+        `lifetime_strategy=SINGLETON` instead.
+        """
         self._bindings[abstract] = Binding(abstract, lambda: instance, SINGLETON)
 
     def bind_contextual(self, *,
@@ -38,6 +91,10 @@ class Container:
                         give: TConcrete,
                         lifetime_strategy: str = NEW_EVERY_TIME
                         ) -> None:
+        """
+        Used to create a *contextual* binding. This is used when you want to customize a specific class either by the
+        `abstract` (annotation) it needs, or by the name of an `__init__` kwarg.
+        """
         if wants is None and called is None:
             raise TypeError("Cannot create contextual binding with specifying either `wants` or `called`.")
         abstract = wants
@@ -53,6 +110,12 @@ class Container:
         )
 
     def make(self, abstract: TAbstract, init_kwargs=None) -> Any:
+        """
+        Make an instance of `abstract` and return it, obeying all registered binding rules.
+        If `init_kwargs` is specified, it will overrule any bindings that have been registered and if `abstract`
+        was registered as a singleton, the instance will NOT be saved as a singleton.
+        `abstract` may also be any callable, so this could be used to call a function with automatic fulfillment of its args.
+        """
         return self._make(abstract, init_kwargs, None, None)
 
     def _make(self, abstract: TAbstract, init_kwargs, parent: Optional[TAbstract], parent_name: Optional[str]) -> Any:
