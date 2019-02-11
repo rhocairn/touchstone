@@ -163,10 +163,7 @@ class Container(AbstractContainer):
         if abstract in self._bindings:
             return self._bindings[abstract]
 
-        try:
-            return self._make_auto_binding(abstract)
-        except TypeError:
-            raise ResolutionError("Can't fulfill parameter {}.{}: {}".format(parent, name, abstract))
+        return self._make_auto_binding(abstract)
 
     def _make_auto_binding(self, abstract: TAbstract) -> TBinding:
         try:
