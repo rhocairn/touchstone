@@ -88,7 +88,7 @@ class AutoBinding(AbstractBinding):
 
 class ContextualBinding(AbstractBinding):
     def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
-                 parent: TAbstract, parent_name: Optional[str]) -> None:
+                 parent: TConcrete, parent_name: Optional[str]) -> None:
         if abstract is None and parent_name is None:
             raise TypeError("Cannot create contextual binding with no context.")
         self.abstract = abstract

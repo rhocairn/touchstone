@@ -9,12 +9,12 @@ from typing import (
 
 from py_ioc.bindings import (
     AutoBinding,
-    TBinding,
-    SimpleBinding,
     ContextualBinding,
     NEW_EVERY_TIME,
     SINGLETON,
+    SimpleBinding,
     TAbstract,
+    TBinding,
     TConcrete,
 )
 
@@ -30,7 +30,7 @@ class AbstractContainer(abc.ABC):
 
     @abc.abstractmethod
     def bind_contextual(self, *,
-                        when: TAbstract,
+                        when: TConcrete,
                         wants: Optional[TAbstract] = None,
                         called: Optional[str] = None,
                         give: TConcrete,
@@ -85,7 +85,7 @@ class Container(AbstractContainer):
         self.bind(abstract, lambda: instance, SINGLETON)
 
     def bind_contextual(self, *,
-                        when: TAbstract,
+                        when: TConcrete,
                         wants: Optional[TAbstract] = None,
                         called: Optional[str] = None,
                         give: TConcrete,
