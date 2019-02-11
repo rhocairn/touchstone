@@ -9,6 +9,7 @@ from typing import (
     Type,
     TypeVar,
     NamedTuple,
+    ClassVar,
 )
 
 import pytest
@@ -206,7 +207,8 @@ class TestContainer:
         with pytest.raises(ResolutionError):
             container.make(typ)
 
-    @pytest.mark.parametrize('typ', [List[object], Type[int], TypeVar('T', int, float), Callable, IO, NamedTuple])
+    @pytest.mark.parametrize('typ', [List[object], Type[int], TypeVar('T', int, float), Callable, IO, NamedTuple,
+                                     ClassVar[int]])
     def test_make_does_not_create_typing_hints(self, typ):
         container = Container()
         with pytest.raises(ResolutionError):
@@ -417,3 +419,85 @@ class TestContainer:
         container.bind_contextual(when=MemoryStore, wants=dict, called='initial_data', give=lambda: {})
         fib = container.make(CachingFibonacci)
         assert fib.calculate(6) == 8
+
+    def test_make_injects_class_annotations(self):
+        class X:
+            pass
+
+        class Y:
+            foo: X
+
+        container = Container()
+        y = container.make(Y)
+        assert isinstance(y.foo, X)
+
+    def test_make_does_not_inject_class_annotations_if_hinted_in_init(self):
+        class X1:
+            pass
+
+        class X2:
+            pass
+
+        class Y:
+            foo: X1
+
+            def __init__(self, foo: X2):
+                self.foo = foo
+
+        container = Container()
+        y = container.make(Y)
+        assert isinstance(y.foo, X2)
+
+    def test_make_does_not_inject_class_annotations_if_set_on_class(self):
+        class X:
+            pass
+
+        x1 = X()
+
+        class Y:
+            foo: X = x1
+
+        container = Container()
+        y = container.make(Y)
+        assert y.foo is x1
+        assert Y.foo is x1
+
+    def test_make_does_not_inject_class_annotations_if_hinted_as_classvar(self):
+        class X:
+            pass
+
+        class Y:
+            foo: ClassVar[X]
+
+        container = Container()
+        y = container.make(Y)
+        assert not hasattr(Y, 'foo')
+        assert not hasattr(y, 'foo')
+
+    def test_make_init_kwargs_also_apply_to_attrs(self):
+        class X:
+            pass
+
+        class Y:
+            foo: X
+
+        x1 = X()
+        container = Container()
+        y = container.make(Y, {'foo': x1})
+        assert not hasattr(Y, 'foo')
+        assert y.foo is x1
+
+    def test_make_init_kwargs_params_used_before_attr(self):
+        class X:
+            pass
+
+        class Y:
+            foo: X
+
+            def __init__(self, foo: X):
+                self.init_foo = foo
+
+        container = Container()
+        y = container.make(Y)
+        assert isinstance(y.init_foo, X)
+        assert not hasattr(y, 'foo')

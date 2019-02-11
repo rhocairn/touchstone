@@ -57,6 +57,20 @@ class AbstractBinding(abc.ABC):
             if param.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
         }
 
+    def get_concrete_attrs(self) -> Dict[str, Any]:
+        """
+        Returns a dict for the concrete's attribute annotations, that is `self.concrete.__annotations__`.
+        Excludes ClassVar typehints and excludes annotations that exist as attributes on the concrete class itself.
+        """
+        try:
+            return {
+                param: annotation
+                for param, annotation in self.concrete.__annotations__.items()
+                if not hasattr(self.concrete, param) and not isinstance(annotation, type(typing.ClassVar))
+            }
+        except AttributeError:
+            return {}
+
 
 class SimpleBinding(AbstractBinding):
     def __init__(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str) -> None:

@@ -143,11 +143,19 @@ class Container(AbstractContainer):
         if not init_kwargs and binding in self._instances:
             return self._instances[binding]
 
+        # Build instance
         fulfilled_params = self._resolve_params(binding, init_kwargs)
-        unused_init_kwargs = set(init_kwargs.keys()) - set(fulfilled_params.keys())
+        instance = binding.make(fulfilled_params)
+
+        # Configure instance
+        fulfilled_attrs = self._resolve_attrs(binding, init_kwargs, fulfilled_params)
+        for k, v in fulfilled_attrs.items():
+            setattr(instance, k, v)
+
+        used_kwarg_names = set(fulfilled_attrs.keys()) | set(fulfilled_params.keys())
+        unused_init_kwargs = set(init_kwargs.keys()) - used_kwarg_names
         if unused_init_kwargs:
             raise ResolutionError("Unused explicit init_kwargs: {}".format(unused_init_kwargs))
-        instance = binding.make(fulfilled_params)
 
         if not init_kwargs and binding.lifetime_strategy == SINGLETON:
             self._instances[binding] = instance
@@ -193,7 +201,7 @@ class Container(AbstractContainer):
                     ))
             return binding
 
-    def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]):
+    def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]) -> Dict[str, Any]:
         needed_params = binding.get_concrete_params()
         fulfilled_params = {}
         for name, annotation in needed_params.items():
@@ -202,3 +210,19 @@ class Container(AbstractContainer):
             else:
                 fulfilled_params[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
         return fulfilled_params
+
+    def _resolve_attrs(self,
+                       binding: TBinding,
+                       init_kwargs: Dict[str, Any],
+                       fulfilled_params: Dict[str, Any],
+                       ) -> Dict[str, Any]:
+        needed_attrs = binding.get_concrete_attrs()
+        fulfilled_attrs = {}
+        for name, annotation in needed_attrs.items():
+            if name in fulfilled_params:
+                continue
+            if name in init_kwargs:
+                fulfilled_attrs[name] = init_kwargs[name]
+            else:
+                fulfilled_attrs[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
+        return fulfilled_attrs
