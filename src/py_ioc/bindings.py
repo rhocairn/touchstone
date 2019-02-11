@@ -30,6 +30,13 @@ def is_typing(abstract: TAbstract):
     return abstract in TYPING_TYPES or type(abstract) in TYPING_TYPES
 
 
+def is_typing_classvar(obj: Any):
+    return (
+            isinstance(obj, type(typing.ClassVar))  # py36
+            or getattr(obj, '__origin__', None) is typing.ClassVar  # py37
+    )
+
+
 class AbstractBinding(abc.ABC):
     abstract: Optional[TAbstract]
     concrete: TConcrete
@@ -66,7 +73,7 @@ class AbstractBinding(abc.ABC):
             return {
                 param: annotation
                 for param, annotation in self.concrete.__annotations__.items()
-                if not hasattr(self.concrete, param) and not isinstance(annotation, type(typing.ClassVar))
+                if not hasattr(self.concrete, param) and not is_typing_classvar(annotation)
             }
         except AttributeError:
             return {}
