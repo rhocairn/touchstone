@@ -136,7 +136,7 @@ class Container(AbstractContainer):
             return None
 
         if init_kwargs:
-            binding = self._make_auto_binding(abstract)
+            binding = self._make_auto_binding(abstract, parent_name or str(abstract))
         else:
             binding = self._resolve_binding(abstract, parent, parent_name)
 
@@ -175,13 +175,13 @@ class Container(AbstractContainer):
         if abstract in self._bindings:
             return self._bindings[abstract]
 
-        return self._make_auto_binding(abstract)
+        return self._make_auto_binding(abstract, name)
 
-    def _make_auto_binding(self, abstract: TAbstract) -> TBinding:
+    def _make_auto_binding(self, abstract: TAbstract, name) -> TBinding:
         try:
             return AutoBinding(abstract)
         except BindingError as e:
-            raise ResolutionError("Can't resolve requirement for {}".format(abstract)) from e
+            raise ResolutionError("Can't resolve {} requirement for {}".format(name, abstract)) from e
 
     def _resolve_contextual_binding(self, abstract, parent, name):
         if abstract is inspect.Parameter.empty:
@@ -194,13 +194,10 @@ class Container(AbstractContainer):
         if (None, parent, name) in self._contextual_bindings:
             binding = self._contextual_bindings[(None, parent, name)]
             if abstract is not None:
-                raise ResolutionError(
-                    "{}.{}: {} is annotated, but the contextual binding does not use type hints".format(
-                        binding.abstract,
-                        binding.parent_name,
-                        abstract,
-                    ))
-            return binding
+                raise ResolutionError(f"{binding.parent} has contextual binding for param {binding.parent_name} but"
+                                      " that binding is annotated as {abstract} and the contextual binding is missing "
+                                      "the `wants` parameter")
+                return binding
 
     def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]) -> Dict[str, Any]:
         needed_params = binding.get_concrete_params()

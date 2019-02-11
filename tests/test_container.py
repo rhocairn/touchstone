@@ -1,4 +1,5 @@
 import abc
+import re
 import sys
 from collections import namedtuple
 
@@ -22,6 +23,14 @@ from py_ioc.exceptions import (
     ResolutionError,
     BindingError,
 )
+
+
+def assert_raises(exc_type, match):
+    if not isinstance(match, str):
+        match = str(match)
+    match = re.escape(match)
+    return pytest.raises(exc_type, match=match)
+
 
 
 class TestContainer:
@@ -76,16 +85,6 @@ class TestContainer:
         assert isinstance(y.x, X)
         assert y.x.foo == 'bar'
 
-    def test_make_raises_if_not_concrete(self):
-        class X(abc.ABC):
-            @abc.abstractmethod
-            def foo(self):
-                pass
-
-        container = Container()
-        with pytest.raises(ResolutionError):
-            container.make(X)
-
     def test_make_string_argument_works(self):
         def make_n():
             return 5
@@ -93,6 +92,16 @@ class TestContainer:
         container = Container()
         container.bind('n', make_n)
         assert container.make('n') == 5
+
+    def test_make_raises_if_not_concrete(self):
+        class X(abc.ABC):
+            @abc.abstractmethod
+            def foo(self):
+                pass
+
+        container = Container()
+        with assert_raises(ResolutionError, X):
+            container.make(X)
 
     def test_make_string_argument_in_subrequirement(self):
         class X:
@@ -204,14 +213,14 @@ class TestContainer:
                                      frozenset, property, range, slice, object])
     def test_make_does_not_create_builtin_types(self, typ):
         container = Container()
-        with pytest.raises(ResolutionError):
+        with assert_raises(ResolutionError, typ):
             container.make(typ)
 
     @pytest.mark.parametrize('typ', [List[object], Type[int], TypeVar('T', int, float), Callable, IO, NamedTuple,
                                      ClassVar[int]])
     def test_make_does_not_create_typing_hints(self, typ):
         container = Container()
-        with pytest.raises(ResolutionError):
+        with assert_raises(ResolutionError, typ):
             container.make(typ)
 
     def test_make_contextual_with_builtin_type(self):
@@ -238,12 +247,12 @@ class TestContainer:
         container.bind_contextual(when=Y, called='x1', give=lambda: X('foo'))
         container.bind_contextual(when=Y, called='x2', give=lambda: X('bar'))
 
-        with pytest.raises(ResolutionError):
+        with assert_raises(ResolutionError, Y):
             container.make(Y)
 
     def test_bind_contextual_needs_either_varname_or_needs_arg(self):
         container = Container()
-        with pytest.raises(BindingError):
+        with assert_raises(BindingError, object):
             container.bind_contextual(when=object, give=object)
 
     def test_contextual_bindings_does_not_override_global_singleton(self):
@@ -315,7 +324,7 @@ class TestContainer:
         Y = namedtuple('Y', ['x'])
 
         container = Container()
-        with pytest.raises(ResolutionError):
+        with assert_raises(ResolutionError, 'x'):
             container.make(Y)
 
     def test_make_raises_if_no_annotation(self):
@@ -323,7 +332,7 @@ class TestContainer:
             def __init__(self, foo): pass
 
         container = Container()
-        with pytest.raises(ResolutionError):
+        with assert_raises(ResolutionError, 'foo'):
             container.make(X)
 
     def test_make_handles_None_annotation(self):
@@ -368,7 +377,7 @@ class TestContainer:
                 self.foo = foo
 
         container = Container()
-        with pytest.raises(ResolutionError):
+        with assert_raises(ResolutionError, 'bar'):
             container.make(X, {'foo': 'x', 'bar': 'y'})
 
     def test_make_caching_fibonacci(self):
@@ -409,11 +418,11 @@ class TestContainer:
                 return self.calculate(n - 1) + self.calculate(n - 2)
 
         container = Container()
-        with pytest.raises(ResolutionError, match=str(KeyValueDatabase)):
+        with assert_raises(ResolutionError, KeyValueDatabase):
             container.make(CachingFibonacci)
 
         container.bind(KeyValueDatabase, MemoryStore)
-        with pytest.raises(ResolutionError):
+        with assert_raises(ResolutionError, 'initial_data'):
             container.make(CachingFibonacci)
 
         container.bind_contextual(when=MemoryStore, wants=dict, called='initial_data', give=lambda: {})

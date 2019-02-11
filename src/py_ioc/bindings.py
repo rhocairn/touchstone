@@ -27,7 +27,10 @@ def is_builtin(abstract: TAbstract):
 
 
 def is_typing(abstract: TAbstract):
-    return abstract in TYPING_TYPES or type(abstract) in TYPING_TYPES
+    return (
+            type(abstract) in TYPING_TYPES
+            or abstract in TYPING_TYPES  # Needed for py37 typing.IO
+    )
 
 
 def is_typing_classvar(obj: Any):
@@ -118,7 +121,7 @@ class ContextualBinding(AbstractBinding):
     def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
                  parent: TConcrete, parent_name: Optional[str]) -> None:
         if abstract is None and parent_name is None:
-            raise BindingError("Cannot create contextual binding with no context.")
+            raise BindingError(f"Cannot create contextual binding with no context for {parent}")
         self.abstract = abstract
         self.concrete = concrete  # type: ignore
         self.lifetime_strategy = lifetime_strategy
