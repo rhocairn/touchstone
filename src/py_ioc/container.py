@@ -155,7 +155,7 @@ class Container(AbstractContainer):
         used_kwarg_names = set(resolved_attrs.keys()) | set(resolved_params.keys())
         unused_init_kwargs = set(init_kwargs.keys()) - used_kwarg_names
         if unused_init_kwargs:
-            raise ResolutionError("Unused explicit init_kwargs: {}".format(unused_init_kwargs))
+            raise ResolutionError(f"Unused explicit init_kwargs: {unused_init_kwargs}")
 
         if not init_kwargs and binding.lifetime_strategy == SINGLETON:
             self._instances[binding] = instance
@@ -181,7 +181,7 @@ class Container(AbstractContainer):
         try:
             return AutoBinding(abstract)
         except BindingError as e:
-            raise ResolutionError("Can't resolve {} requirement for {}".format(name, abstract)) from e
+            raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
 
     def _resolve_contextual_binding(self, abstract, parent, name):
         if abstract is inspect.Parameter.empty:
@@ -197,7 +197,6 @@ class Container(AbstractContainer):
                 raise ResolutionError(f"{binding.parent} has contextual binding for param {binding.parent_name} but"
                                       " that binding is annotated as {abstract} and the contextual binding is missing "
                                       "the `wants` parameter")
-                return binding
 
     def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]) -> Dict[str, Any]:
         needed_params = binding.get_concrete_params()

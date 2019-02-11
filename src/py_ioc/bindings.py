@@ -85,7 +85,7 @@ class AbstractBinding(abc.ABC):
 class SimpleBinding(AbstractBinding):
     def __init__(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str) -> None:
         if is_builtin(abstract):
-            raise BindingError("Cannot bind builtin type {}".format(abstract))
+            raise BindingError(f"Cannot bind builtin type {abstract}")
         self.abstract = abstract
         self.concrete = concrete  # type: ignore
         self.lifetime_strategy = lifetime_strategy
@@ -106,7 +106,7 @@ class AutoBinding(AbstractBinding):
                 or abstract is inspect.Parameter.empty
                 or is_builtin(abstract)
                 or is_typing(abstract)):
-            raise BindingError("Cannot create auto-binding for typing type {}".format(abstract))
+            raise BindingError(f"Cannot create auto-binding for typing type {abstract}")
         self.abstract = abstract
         self.concrete = abstract  # type: ignore
 

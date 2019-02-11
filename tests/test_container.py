@@ -32,7 +32,6 @@ def assert_raises(exc_type, match):
     return pytest.raises(exc_type, match=match)
 
 
-
 class TestContainer:
     def test_make_simple_autowiring_with_concrete_annotations(self):
         class X:
