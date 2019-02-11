@@ -144,21 +144,22 @@ class Container(AbstractContainer):
             return self._instances[binding]
 
         # Build instance
-        fulfilled_params = self._resolve_params(binding, init_kwargs)
-        instance = binding.make(fulfilled_params)
+        resolved_params = self._resolve_params(binding, init_kwargs)
+        instance = binding.make(resolved_params)
 
         # Configure instance
-        fulfilled_attrs = self._resolve_attrs(binding, init_kwargs, fulfilled_params)
-        for k, v in fulfilled_attrs.items():
+        resolved_attrs = self._resolve_attrs(binding, init_kwargs, resolved_params)
+        for k, v in resolved_attrs.items():
             setattr(instance, k, v)
 
-        used_kwarg_names = set(fulfilled_attrs.keys()) | set(fulfilled_params.keys())
+        used_kwarg_names = set(resolved_attrs.keys()) | set(resolved_params.keys())
         unused_init_kwargs = set(init_kwargs.keys()) - used_kwarg_names
         if unused_init_kwargs:
             raise ResolutionError("Unused explicit init_kwargs: {}".format(unused_init_kwargs))
 
         if not init_kwargs and binding.lifetime_strategy == SINGLETON:
             self._instances[binding] = instance
+
         return instance
 
     def _resolve_binding(self,
@@ -180,7 +181,7 @@ class Container(AbstractContainer):
         try:
             return AutoBinding(abstract)
         except BindingError as e:
-            raise ResolutionError("Can't fulfill requirement for {}".format(abstract)) from e
+            raise ResolutionError("Can't resolve requirement for {}".format(abstract)) from e
 
     def _resolve_contextual_binding(self, abstract, parent, name):
         if abstract is inspect.Parameter.empty:
@@ -203,26 +204,26 @@ class Container(AbstractContainer):
 
     def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]) -> Dict[str, Any]:
         needed_params = binding.get_concrete_params()
-        fulfilled_params = {}
+        resolved_params = {}
         for name, annotation in needed_params.items():
             if name in init_kwargs:
-                fulfilled_params[name] = init_kwargs[name]
+                resolved_params[name] = init_kwargs[name]
             else:
-                fulfilled_params[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
-        return fulfilled_params
+                resolved_params[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
+        return resolved_params
 
     def _resolve_attrs(self,
                        binding: TBinding,
                        init_kwargs: Dict[str, Any],
-                       fulfilled_params: Dict[str, Any],
+                       resolved_params: Dict[str, Any],
                        ) -> Dict[str, Any]:
         needed_attrs = binding.get_concrete_attrs()
-        fulfilled_attrs = {}
+        resolved_attrs = {}
         for name, annotation in needed_attrs.items():
-            if name in fulfilled_params:
+            if name in resolved_params:
                 continue
             if name in init_kwargs:
-                fulfilled_attrs[name] = init_kwargs[name]
+                resolved_attrs[name] = init_kwargs[name]
             else:
-                fulfilled_attrs[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
-        return fulfilled_attrs
+                resolved_attrs[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
+        return resolved_attrs
