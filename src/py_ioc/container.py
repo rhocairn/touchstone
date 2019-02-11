@@ -192,5 +192,5 @@ class Container(AbstractContainer):
             if name in init_kwargs:
                 fulfilled_params[name] = init_kwargs[name]
             else:
-                fulfilled_params[name] = self._make(annotation, {}, parent=binding.abstract, parent_name=name)
+                fulfilled_params[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
         return fulfilled_params

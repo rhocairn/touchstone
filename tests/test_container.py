@@ -320,3 +320,51 @@ class TestContainer:
         assert x3 is x1
         assert x2.foo == 'bar'
         assert x2 is not x1
+
+    def test_make_caching_fibonacci(self):
+        """A more complete quasi-real-life test"""
+        class KeyValueDatabase(abc.ABC):
+            @abc.abstractmethod
+            def get(self, key): pass
+
+            @abc.abstractmethod
+            def has(self, key): pass
+
+            @abc.abstractmethod
+            def set(self, key, value): pass
+
+        class MemoryStore(KeyValueDatabase):
+            def __init__(self, initial_data: dict):
+                self.data = initial_data
+
+            def set(self, key, value):
+                self.data[key] = value
+
+            def has(self, key):
+                return key in self.data
+
+            def get(self, key):
+                return self.data[key]
+
+        class CachingFibonacci:
+            def __init__(self, cache: KeyValueDatabase):
+                self.cache = cache
+
+            def calculate(self, n: int):
+                if n in {0, 1}:
+                    return n
+                if self.cache.has(n):
+                    return self.cache.get(n)
+                return self.calculate(n-1) + self.calculate(n-2)
+
+        container = Container()
+        with pytest.raises(TypeError, match=str(KeyValueDatabase)):
+            container.make(CachingFibonacci)
+
+        container.bind(KeyValueDatabase, MemoryStore)
+        with pytest.raises(TypeError):
+            container.make(CachingFibonacci)
+
+        container.bind_contextual(when=MemoryStore, wants=dict, called='initial_data', give=lambda: {})
+        fib = container.make(CachingFibonacci)
+        assert fib.calculate(6) == 8

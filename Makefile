@@ -1,5 +1,5 @@
 .PHONY: build
-build:
+build: Dockerfile setup.py
 	docker-compose build
 
 .PHONY: test
