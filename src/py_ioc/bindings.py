@@ -22,18 +22,18 @@ BUILTIN_TYPES = {getattr(builtins, t) for t in dir(builtins) if isinstance(getat
 TYPING_TYPES = {getattr(typing, t) for t in dir(typing) if isinstance(getattr(typing, t), type)}
 
 
-def is_builtin(abstract: TAbstract):
+def is_builtin(abstract: TAbstract) -> bool:
     return abstract in BUILTIN_TYPES
 
 
-def is_typing(abstract: TAbstract):
+def is_typing(abstract: TAbstract) -> bool:
     return (
             type(abstract) in TYPING_TYPES
             or abstract in TYPING_TYPES  # Needed for py37 typing.IO
     )
 
 
-def is_typing_classvar(obj: Any):
+def is_typing_classvar(obj: Any) -> bool:
     return (
             isinstance(obj, type(typing.ClassVar))  # py36
             or getattr(obj, '__origin__', None) is typing.ClassVar  # py37
@@ -50,7 +50,7 @@ class AbstractBinding(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def __hash__(self):
+    def __hash__(self) -> int:
         pass
 
     def make(self, fulfilled_params: Dict[str, Any]) -> Any:
@@ -87,7 +87,7 @@ class SimpleBinding(AbstractBinding):
         if is_builtin(abstract):
             raise BindingError(f"Cannot bind builtin type {abstract}")
         self.abstract = abstract
-        self.concrete = concrete  # type: ignore
+        self.concrete: TConcrete = concrete
         self.lifetime_strategy = lifetime_strategy
 
     def is_contextual(self) -> bool:
@@ -100,7 +100,7 @@ class SimpleBinding(AbstractBinding):
 class AutoBinding(AbstractBinding):
     lifetime_strategy = NEW_EVERY_TIME
 
-    def __init__(self, abstract) -> None:
+    def __init__(self, abstract: TAbstract) -> None:
         if (not callable(abstract)
                 or inspect.isabstract(abstract)
                 or abstract is inspect.Parameter.empty
@@ -108,7 +108,7 @@ class AutoBinding(AbstractBinding):
                 or is_typing(abstract)):
             raise BindingError(f"Cannot create auto-binding for typing type {abstract}")
         self.abstract = abstract
-        self.concrete = abstract  # type: ignore
+        self.concrete: TConcrete = abstract
 
     def is_contextual(self) -> bool:
         return False
@@ -123,7 +123,7 @@ class ContextualBinding(AbstractBinding):
         if abstract is None and parent_name is None:
             raise BindingError(f"Cannot create contextual binding with no context for {parent}")
         self.abstract = abstract
-        self.concrete = concrete  # type: ignore
+        self.concrete: TConcrete = concrete
         self.lifetime_strategy = lifetime_strategy
         self.parent = parent
         self.parent_name = parent_name

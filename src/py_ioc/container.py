@@ -18,9 +18,11 @@ from py_ioc.bindings import (
     TConcrete,
 )
 from py_ioc.exceptions import (
-    ResolutionError,
     BindingError,
+    ResolutionError,
 )
+
+KwargsDict = Dict[str, Any]
 
 
 class AbstractContainer(abc.ABC):
@@ -66,13 +68,13 @@ class Container(AbstractContainer):
         * A classmethod acting as a factory function
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._bindings: Dict[TAbstract, TBinding] = {}
         self._instances: Dict[TBinding, Any] = {}
         self._contextual_bindings: Dict[Tuple[Optional[TAbstract], TAbstract, Optional[str]], ContextualBinding] = {}
         self.bind_instance(Container, self)
 
-    def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy=NEW_EVERY_TIME) -> None:
+    def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str = NEW_EVERY_TIME) -> None:
         """
         Bind an `abstract` (an annotation) to a `concrete` (something which returns objects fulfilling that annotation).
         If `lifetime_strategy` is set to `SINGLETON` then only one instance of the concrete implementation will be used.
@@ -111,7 +113,7 @@ class Container(AbstractContainer):
             parent_name=parent_name,
         )
 
-    def make(self, abstract: TAbstract, init_kwargs: dict = None) -> Any:
+    def make(self, abstract: TAbstract, init_kwargs: Optional[KwargsDict] = None) -> Any:
         """
         Make an instance of `abstract` and return it, obeying registered binding rules.
 
@@ -128,7 +130,7 @@ class Container(AbstractContainer):
 
     def _make(self,
               abstract: TAbstract,
-              init_kwargs: dict,
+              init_kwargs: KwargsDict,
               parent: Optional[TConcrete],
               parent_name: Optional[str],
               ) -> Any:
@@ -177,15 +179,19 @@ class Container(AbstractContainer):
 
         return self._make_auto_binding(abstract, name)
 
-    def _make_auto_binding(self, abstract: TAbstract, name) -> TBinding:
+    def _make_auto_binding(self, abstract: TAbstract, name: Optional[str]) -> TBinding:
         try:
             return AutoBinding(abstract)
         except BindingError as e:
             raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
 
-    def _resolve_contextual_binding(self, abstract, parent, name):
+    def _resolve_contextual_binding(self,
+                                    abstract: TAbstract,
+                                    parent: TAbstract,
+                                    name: Optional[str],
+                                    ) -> Optional[TBinding]:
         if abstract is inspect.Parameter.empty:
-            abstract = None
+            abstract = None  # type: ignore  # None *IS* hashable, mypy!
 
         if (abstract, parent, name) in self._contextual_bindings:
             return self._contextual_bindings[(abstract, parent, name)]
@@ -193,12 +199,12 @@ class Container(AbstractContainer):
             return self._contextual_bindings[(abstract, parent, None)]
         if (None, parent, name) in self._contextual_bindings:
             binding = self._contextual_bindings[(None, parent, name)]
-            if abstract is not None:
-                raise ResolutionError(f"{binding.parent} has contextual binding for param {binding.parent_name} but"
-                                      " that binding is annotated as {abstract} and the contextual binding is missing "
-                                      "the `wants` parameter")
+            raise ResolutionError(f"{binding.parent} has contextual binding for param {binding.parent_name} but"
+                                  " that binding is annotated as {abstract} and the contextual binding is missing "
+                                  "the `wants` parameter")
+        return None
 
-    def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    def _resolve_params(self, binding: TBinding, init_kwargs: KwargsDict) -> KwargsDict:
         needed_params = binding.get_concrete_params()
         resolved_params = {}
         for name, annotation in needed_params.items():
@@ -210,9 +216,9 @@ class Container(AbstractContainer):
 
     def _resolve_attrs(self,
                        binding: TBinding,
-                       init_kwargs: Dict[str, Any],
-                       resolved_params: Dict[str, Any],
-                       ) -> Dict[str, Any]:
+                       init_kwargs: KwargsDict,
+                       resolved_params: KwargsDict,
+                       ) -> KwargsDict:
         needed_attrs = binding.get_concrete_attrs()
         resolved_attrs = {}
         for name, annotation in needed_attrs.items():

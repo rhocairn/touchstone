@@ -104,7 +104,7 @@ class TestContainer:
 
     def test_make_string_argument_in_subrequirement(self):
         class X:
-            def __init__(self, arg: 'n'):  # type: ignore  # noqa: F821
+            def __init__(self, arg: 'n'):  # noqa: F821
                 self.arg = arg
 
         def make_n():
@@ -343,7 +343,7 @@ class TestContainer:
         x = container.make(X)
         assert x.foo is None
 
-    def test_make_does_support_namedtuple_contextual_binding(self):
+    def test_make_supports_namedtuple_contextual_binding(self):
         class X:
             pass
 

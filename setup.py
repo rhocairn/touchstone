@@ -9,7 +9,7 @@ from setuptools import (
 )
 
 
-def find_version(*path) -> str:
+def find_version(*path: str) -> str:
     rootdir = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(rootdir, *path), 'r') as fp:
         version_file = fp.read()
@@ -20,7 +20,7 @@ def find_version(*path) -> str:
     raise RuntimeError("Unable to find version string.")
 
 
-install_requires = []  # type: ignore
+install_requires = []  # type: list[str]
 
 tests_requires = [
     'pytest==4.*',
