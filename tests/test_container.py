@@ -1,12 +1,14 @@
 import abc
 import sys
 from collections import namedtuple
+
 from typing import (
     Callable,
     IO,
     List,
     Type,
     TypeVar,
+    NamedTuple,
 )
 
 import pytest
@@ -14,6 +16,10 @@ import pytest
 from py_ioc.container import (
     Container,
     SINGLETON,
+)
+from py_ioc.exceptions import (
+    ResolutionError,
+    BindingError,
 )
 
 
@@ -76,7 +82,7 @@ class TestContainer:
                 pass
 
         container = Container()
-        with pytest.raises(TypeError):
+        with pytest.raises(ResolutionError):
             container.make(X)
 
     def test_make_string_argument_works(self):
@@ -169,7 +175,7 @@ class TestContainer:
         assert y1.x.foo == 'bar1'
         assert y2.x.foo == 'bar2'
 
-    def test_make_supports_contextual_binding_with_varnae(self):
+    def test_make_supports_contextual_binding_with_varname(self):
         class X:
             def __init__(self, foo):
                 self.foo = foo
@@ -187,7 +193,7 @@ class TestContainer:
         assert y.x1.foo == 'bar1'
         assert y.x2.foo == 'bar2'
 
-    def test_make_supports_contextual_binding_with_only_varnae(self):
+    def test_make_supports_contextual_binding_with_only_varname(self):
         class X:
             def __init__(self, foo):
                 self.foo = foo
@@ -206,16 +212,16 @@ class TestContainer:
         assert y.x2.foo == 'bar2'
 
     @pytest.mark.parametrize('typ', [str, bytes, int, bool, bytearray, float, complex, dict, tuple, list, set,
-                                     frozenset, property, range, slice, object, namedtuple])
-    def test_make_does_not_create_primitive_types(self, typ):
+                                     frozenset, property, range, slice, object])
+    def test_make_does_not_create_builtin_types(self, typ):
         container = Container()
-        with pytest.raises(TypeError):
+        with pytest.raises(ResolutionError):
             container.make(typ)
 
-    @pytest.mark.parametrize('typ', [List[object], Type[int], TypeVar('T', int, float), Callable, IO])
+    @pytest.mark.parametrize('typ', [List[object], Type[int], TypeVar('T', int, float), Callable, IO, NamedTuple])
     def test_make_does_not_create_typing_hints(self, typ):
         container = Container()
-        with pytest.raises(TypeError):
+        with pytest.raises(ResolutionError):
             container.make(typ)
 
     def test_make_contextual_with_builtin_type(self):
@@ -242,12 +248,12 @@ class TestContainer:
         container.bind_contextual(when=Y, called='x1', give=lambda: X('foo'))
         container.bind_contextual(when=Y, called='x2', give=lambda: X('bar'))
 
-        with pytest.raises(TypeError):
+        with pytest.raises(ResolutionError):
             container.make(Y)
 
     def test_bind_contextual_needs_either_varname_or_needs_arg(self):
         container = Container()
-        with pytest.raises(TypeError):
+        with pytest.raises(BindingError):
             container.bind_contextual(when=object, give=object)
 
     def test_contextual_bindings_does_not_override_global_singleton(self):
@@ -301,7 +307,52 @@ class TestContainer:
         class Y:
             x: X
 
+        @dataclass
+        class Z:
+            y: Y
+
         container = Container()
+        y = container.make(Y)
+        z = container.make(Z)
+
+        assert isinstance(y.x, X)
+        assert isinstance(z.y, Y)
+
+    def test_make_does_not_auto_create_namedtuple(self):
+        class X:
+            pass
+
+        Y = namedtuple('Y', ['x'])
+
+        container = Container()
+        with pytest.raises(ResolutionError):
+            container.make(Y)
+
+    def test_make_raises_if_no_annotation(self):
+        class X:
+            def __init__(self, foo): pass
+
+        container = Container()
+        with pytest.raises(ResolutionError):
+            container.make(X)
+
+    def test_make_handles_None_annotation(self):
+        class X:
+            def __init__(self, foo: None):
+                self.foo = foo
+
+        container = Container()
+        x = container.make(X)
+        assert x.foo is None
+
+    def test_make_does_support_namedtuple_contextual_binding(self):
+        class X:
+            pass
+
+        Y = namedtuple('Y', ['x'])
+
+        container = Container()
+        container.bind_contextual(when=Y, called='x', give=X)
         y = container.make(Y)
         assert isinstance(y.x, X)
 
@@ -358,11 +409,11 @@ class TestContainer:
                 return self.calculate(n-1) + self.calculate(n-2)
 
         container = Container()
-        with pytest.raises(TypeError, match=str(KeyValueDatabase)):
+        with pytest.raises(ResolutionError, match=str(KeyValueDatabase)):
             container.make(CachingFibonacci)
 
         container.bind(KeyValueDatabase, MemoryStore)
-        with pytest.raises(TypeError):
+        with pytest.raises(ResolutionError):
             container.make(CachingFibonacci)
 
         container.bind_contextual(when=MemoryStore, wants=dict, called='initial_data', give=lambda: {})

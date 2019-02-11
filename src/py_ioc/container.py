@@ -17,6 +17,10 @@ from py_ioc.bindings import (
     TBinding,
     TConcrete,
 )
+from py_ioc.exceptions import (
+    ResolutionError,
+    BindingError,
+)
 
 
 class AbstractContainer(abc.ABC):
@@ -95,8 +99,6 @@ class Container(AbstractContainer):
         Used to create a *contextual* binding. This is used when you want to customize a specific class either by the
         `abstract` (annotation) it needs, or by the name of an `__init__` kwarg.
         """
-        if wants is None and called is None:
-            raise TypeError("Cannot create contextual binding with specifying either `wants` or `called`.")
         abstract = wants
         parent = when
         parent_name = called
@@ -127,9 +129,12 @@ class Container(AbstractContainer):
     def _make(self,
               abstract: TAbstract,
               init_kwargs: dict,
-              parent: Optional[TAbstract],
+              parent: Optional[TConcrete],
               parent_name: Optional[str],
               ) -> Any:
+        if init_kwargs == {} and abstract is None:
+            return None
+
         if init_kwargs:
             binding = self._make_auto_binding(abstract)
         else:
@@ -161,16 +166,18 @@ class Container(AbstractContainer):
         try:
             return self._make_auto_binding(abstract)
         except TypeError:
-            raise TypeError("Can't fulfill parameter {}.{}: {}".format(parent, name, abstract))
+            raise ResolutionError("Can't fulfill parameter {}.{}: {}".format(parent, name, abstract))
 
     def _make_auto_binding(self, abstract: TAbstract) -> TBinding:
-        if callable(abstract) and not inspect.isabstract(abstract):
-            return AutoBinding(abstract, abstract)
-        raise TypeError("Can't fulfill binding for {}".format(abstract))
+        try:
+            return AutoBinding(abstract)
+        except BindingError as e:
+            raise ResolutionError("Can't fulfill requirement for {}".format(abstract)) from e
 
     def _resolve_contextual_binding(self, abstract, parent, name):
-        if abstract is inspect._empty:
+        if abstract is inspect.Parameter.empty:
             abstract = None
+
         if (abstract, parent, name) in self._contextual_bindings:
             return self._contextual_bindings[(abstract, parent, name)]
         if (abstract, parent, None) in self._contextual_bindings:
@@ -178,11 +185,12 @@ class Container(AbstractContainer):
         if (None, parent, name) in self._contextual_bindings:
             binding = self._contextual_bindings[(None, parent, name)]
             if abstract is not None:
-                raise TypeError("{}.{}: {} is annotated, but the contextual binding does not use type hints".format(
-                    binding.abstract,
-                    binding.parent_name,
-                    abstract,
-                ))
+                raise ResolutionError(
+                    "{}.{}: {} is annotated, but the contextual binding does not use type hints".format(
+                        binding.abstract,
+                        binding.parent_name,
+                        abstract,
+                    ))
             return binding
 
     def _resolve_params(self, binding: TBinding, init_kwargs: Dict[str, Any]):

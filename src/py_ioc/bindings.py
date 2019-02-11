@@ -10,6 +10,8 @@ from typing import (
     Optional,
 )
 
+from py_ioc.exceptions import BindingError
+
 SINGLETON = 'singleton'
 NEW_EVERY_TIME = 'new_every_time'
 
@@ -56,7 +58,7 @@ class AbstractBinding(abc.ABC):
 class SimpleBinding(AbstractBinding):
     def __init__(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str) -> None:
         if is_builtin(abstract):
-            raise TypeError("Cannot bind builtin type {}".format(abstract))
+            raise BindingError("Cannot bind builtin type {}".format(abstract))
         self.abstract = abstract
         self.concrete = concrete  # type: ignore
         self.lifetime_strategy = lifetime_strategy
@@ -71,13 +73,15 @@ class SimpleBinding(AbstractBinding):
 class AutoBinding(AbstractBinding):
     lifetime_strategy = NEW_EVERY_TIME
 
-    def __init__(self, abstract: TAbstract, concrete: TConcrete) -> None:
-        if is_builtin(abstract):
-            raise TypeError("Cannot auto-bind builtin type {}".format(abstract))
-        if is_typing(abstract):
-            raise TypeError("Cannot auto-bind typing type {}".format(abstract))
+    def __init__(self, abstract) -> None:
+        if (not callable(abstract)
+                or inspect.isabstract(abstract)
+                or abstract is inspect.Parameter.empty
+                or is_builtin(abstract)
+                or is_typing(abstract)):
+            raise BindingError("Cannot create auto-binding for typing type {}".format(abstract))
         self.abstract = abstract
-        self.concrete = concrete  # type: ignore
+        self.concrete = abstract  # type: ignore
 
     def is_contextual(self) -> bool:
         return False
@@ -90,7 +94,7 @@ class ContextualBinding(AbstractBinding):
     def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
                  parent: TConcrete, parent_name: Optional[str]) -> None:
         if abstract is None and parent_name is None:
-            raise TypeError("Cannot create contextual binding with no context.")
+            raise BindingError("Cannot create contextual binding with no context.")
         self.abstract = abstract
         self.concrete = concrete  # type: ignore
         self.lifetime_strategy = lifetime_strategy
