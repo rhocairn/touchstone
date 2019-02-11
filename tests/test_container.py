@@ -360,6 +360,15 @@ class TestContainer:
         assert x2.foo == 'bar'
         assert x2 is not x1
 
+    def test_make_raises_if_given_invalid_explicit_kwargs(self):
+        class X:
+            def __init__(self, foo: str):
+                self.foo = foo
+
+        container = Container()
+        with pytest.raises(ResolutionError):
+            container.make(X, {'foo': 'x', 'bar': 'y'})
+
     def test_make_caching_fibonacci(self):
         """A more complete quasi-real-life test"""
 

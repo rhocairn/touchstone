@@ -47,6 +47,9 @@ class AbstractBinding(abc.ABC):
         return self.concrete(**fulfilled_params)
 
     def get_concrete_params(self) -> Dict[str, Any]:
+        """
+        Returns a dict for the concrete parameters, a dictionary carrying the kwarg-name to its annotation.
+        """
         sig = inspect.signature(self.concrete)
         return {
             name: param.annotation

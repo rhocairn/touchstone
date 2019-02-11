@@ -144,6 +144,9 @@ class Container(AbstractContainer):
             return self._instances[binding]
 
         fulfilled_params = self._resolve_params(binding, init_kwargs)
+        unused_init_kwargs = set(init_kwargs.keys()) - set(fulfilled_params.keys())
+        if unused_init_kwargs:
+            raise ResolutionError("Unused explicit init_kwargs: {}".format(unused_init_kwargs))
         instance = binding.make(fulfilled_params)
 
         if not init_kwargs and binding.lifetime_strategy == SINGLETON:
