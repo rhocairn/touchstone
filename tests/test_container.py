@@ -141,18 +141,6 @@ class TestContainer:
         arg = container.make(returns_arg)
         assert arg is container
 
-    # requires python >= 3.6
-    # def test_make_injects_class_annotations(self):
-    #     class X:
-    # pass
-    #
-    #     class Y:
-    #         foo: X
-    #
-    #     container = Container()
-    #     y = container.make(Y)
-    #     assert isinstance(y.foo, X)
-
     def test_make_supports_contextual_binding(self):
         class X:
             def __init__(self, foo):
@@ -374,6 +362,7 @@ class TestContainer:
 
     def test_make_caching_fibonacci(self):
         """A more complete quasi-real-life test"""
+
         class KeyValueDatabase(abc.ABC):
             @abc.abstractmethod
             def get(self, key): pass
@@ -406,7 +395,7 @@ class TestContainer:
                     return n
                 if self.cache.has(n):
                     return self.cache.get(n)
-                return self.calculate(n-1) + self.calculate(n-2)
+                return self.calculate(n - 1) + self.calculate(n - 2)
 
         container = Container()
         with pytest.raises(ResolutionError, match=str(KeyValueDatabase)):
