@@ -1,17 +1,19 @@
 #!/usr/bin/env python
-import os.path
 import re
 from glob import glob
+from os import path
 
+import os.path
 from setuptools import (
     find_packages,
     setup,
 )
 
+ROOTDIR = os.path.abspath(os.path.dirname(__file__))
+
 
 def find_version(*path: str) -> str:
-    rootdir = os.path.abspath(os.path.dirname(__file__))
-    with open(os.path.join(rootdir, *path), 'r') as fp:
+    with open(os.path.join(ROOTDIR, *path), 'r') as fp:
         version_file = fp.read()
 
     version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
@@ -19,6 +21,9 @@ def find_version(*path: str) -> str:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
+# Read the README file
+with open(path.join(ROOTDIR, 'README.md'), encoding='utf-8') as fp:
+    long_description = fp.read()
 
 install_requires = []  # type: list[str]
 
@@ -33,6 +38,9 @@ tests_requires = [
 
 setup(
     name='touchstone',
+    description="IoC framework driven by annotations and type hints",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     version=find_version('src', 'touchstone', 'version.py'),
     url='https://github.com/gmaybrun/touchstone',
     maintainer='gmaybrun@gmail.com',
