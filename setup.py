@@ -46,6 +46,9 @@ setup(
     extras_require={
         'tests': tests_requires,
     },
+    package_data={
+        'touchstone': ['py.typed'],
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
