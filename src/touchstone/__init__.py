@@ -1,5 +1,5 @@
 from .version import __version__
-from py_ioc.container import (
+from touchstone.container import (
     Container,
     SINGLETON,
     NEW_EVERY_TIME,

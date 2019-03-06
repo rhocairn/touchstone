@@ -38,9 +38,11 @@ RUN git clone https://github.com/pyenv/pyenv.git /.pyenv \
 
 FROM py367 AS app
 
-COPY ./src/py_ioc/__init__.py /app/src/py_ioc/
-COPY ./src/py_ioc/version.py /app/src/py_ioc/
 COPY ./setup.py /app/
-RUN pip install -e /app[tests]
+RUN mkdir -p /app/src/touchstone \
+    && echo '__version__ = "0.0.1-dev1"' > /app/src/touchstone/version.py \
+    && touch /app/src/touchstone/__init__.py \
+    && pip install -e /app[tests]
+
 COPY . /app
 WORKDIR /app

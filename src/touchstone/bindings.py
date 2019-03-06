@@ -10,7 +10,7 @@ from typing import (
     Optional,
 )
 
-from py_ioc.exceptions import BindingError
+from touchstone.exceptions import BindingError
 
 SINGLETON = 'singleton'
 NEW_EVERY_TIME = 'new_every_time'

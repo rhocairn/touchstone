@@ -32,9 +32,9 @@ tests_requires = [
 ]
 
 setup(
-    name='py-ioc',
-    version=find_version('src', 'py_ioc', 'version.py'),
-    url='https://github.com/gmaybrun/?',
+    name='touchstone',
+    version=find_version('src', 'touchstone', 'version.py'),
+    url='https://github.com/gmaybrun/touchstone',
     maintainer='gmaybrun@gmail.com',
     maintainer_email='gmaybrun@gmail.com',
     packages=find_packages('src'),
@@ -47,11 +47,16 @@ setup(
         'tests': tests_requires,
     },
     classifiers=[
-        'Development Status :: 1 - Planning',
+        'Development Status :: 3 - Alpha',
         'Intended Audience :: Developers',
         'Natural Language :: English',
+        'Operating System :: OS Independent',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Topic :: Software Development :: Libraries :: Application Frameworks',
+        'Topic :: Software Development :: Object Brokering',
+        'Topic :: Utilities',
+        'Typing :: Typed',
     ],
 )

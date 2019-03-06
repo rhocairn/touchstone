@@ -15,11 +15,11 @@ from typing import (
 
 import pytest
 
-from py_ioc.container import (
+from touchstone.container import (
     Container,
     SINGLETON,
 )
-from py_ioc.exceptions import (
+from touchstone.exceptions import (
     ResolutionError,
     BindingError,
 )

@@ -7,7 +7,7 @@ from typing import (
     Tuple,
 )
 
-from py_ioc.bindings import (
+from touchstone.bindings import (
     AutoBinding,
     ContextualBinding,
     NEW_EVERY_TIME,
@@ -17,7 +17,7 @@ from py_ioc.bindings import (
     TBinding,
     TConcrete,
 )
-from py_ioc.exceptions import (
+from touchstone.exceptions import (
     BindingError,
     ResolutionError,
 )
