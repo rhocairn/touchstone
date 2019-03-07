@@ -8,6 +8,7 @@ from typing import (
 )
 
 from touchstone.bindings import (
+    AnnotationHint,
     AutoBinding,
     ContextualBinding,
     NEW_EVERY_TIME,
@@ -16,7 +17,6 @@ from touchstone.bindings import (
     TAbstract,
     TBinding,
     TConcrete,
-    AnnotationHint,
 )
 from touchstone.exceptions import (
     BindingError,
@@ -192,11 +192,11 @@ class Container(AbstractContainer):
             raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
 
     def _make_default_vaulue_binding(self, abstract: Optional[TAbstract], parent, name, default_value):
-         return ContextualBinding(abstract=abstract,
-                                  concrete=lambda: default_value,
-                                  lifetime_strategy=NEW_EVERY_TIME,
-                                  parent=parent,
-                                  parent_name=parent)
+        return ContextualBinding(abstract=abstract,
+                                 concrete=lambda: default_value,
+                                 lifetime_strategy=NEW_EVERY_TIME,
+                                 parent=parent,
+                                 parent_name=parent)
 
     # def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
     # parent: TConcrete, parent_name: Optional[str]) -> None:

@@ -1,9 +1,6 @@
 import abc
 import re
 from collections import namedtuple
-
-import pytest
-from dataclasses import dataclass
 from typing import (
     Callable,
     ClassVar,
@@ -13,6 +10,9 @@ from typing import (
     Type,
     TypeVar,
 )
+
+import pytest
+from dataclasses import dataclass
 
 from touchstone.container import (
     Container,
