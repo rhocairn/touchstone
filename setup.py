@@ -26,10 +26,11 @@ def find_version(*path: str) -> str:
 with open(path.join(ROOTDIR, 'README.md'), encoding='utf-8') as fp:
     long_description = fp.read()
 
-install_requires = []  # type: list[str]
+install_requires = [
+    'dataclasses',
+]
 
 tests_requires = [
-    'dataclasses',
     'pytest==4.*',
     'tox==3.*',
     'flake8==3.6.*',

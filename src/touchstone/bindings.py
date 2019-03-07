@@ -1,7 +1,9 @@
 import abc
 import builtins
 import inspect
+
 import typing
+from dataclasses import dataclass
 from typing import (
     Any,
     Callable,
@@ -40,6 +42,16 @@ def is_typing_classvar(obj: Any) -> bool:
     )
 
 
+@dataclass
+class AnnotationHint:
+    NO_DEFAULT_VALUE = inspect.Parameter.empty
+    annotation: TAbstract
+    default_value: Any
+
+    def has_default_value(self):
+        return self.default_value is not self.NO_DEFAULT_VALUE
+
+
 class AbstractBinding(abc.ABC):
     abstract: Optional[TAbstract]
     concrete: TConcrete
@@ -56,25 +68,26 @@ class AbstractBinding(abc.ABC):
     def make(self, fulfilled_params: Dict[str, Any]) -> Any:
         return self.concrete(**fulfilled_params)
 
-    def get_concrete_params(self) -> Dict[str, Any]:
+    def get_concrete_params(self) -> Dict[str, AnnotationHint]:
         """
         Returns a dict for the concrete parameters, a dictionary carrying the kwarg-name to its annotation.
         """
         sig = inspect.signature(self.concrete)
         return {
-            name: param.annotation
+            name: AnnotationHint(param.annotation, param.default)
             for name, param in sig.parameters.items()
             if param.kind not in (inspect.Parameter.VAR_POSITIONAL, inspect.Parameter.VAR_KEYWORD)
         }
 
-    def get_concrete_attrs(self) -> Dict[str, Any]:
+    def get_concrete_attrs(self, instance: Any) -> Dict[str, AnnotationHint]:
         """
         Returns a dict for the concrete's attribute annotations, that is `self.concrete.__annotations__`.
         Excludes ClassVar typehints and excludes annotations that exist as attributes on the concrete class itself.
         """
         try:
             return {
-                param: annotation
+                param: AnnotationHint(annotation,
+                                      getattr(instance, param, AnnotationHint.NO_DEFAULT_VALUE))
                 for param, annotation in self.concrete.__annotations__.items()
                 if not hasattr(self.concrete, param) and not is_typing_classvar(annotation)
             }

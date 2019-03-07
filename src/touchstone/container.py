@@ -150,7 +150,7 @@ class Container(AbstractContainer):
         instance = binding.make(resolved_params)
 
         # Configure instance
-        resolved_attrs = self._resolve_attrs(binding, init_kwargs, resolved_params)
+        resolved_attrs = self._resolve_attrs(instance, binding, init_kwargs, resolved_params)
         for k, v in resolved_attrs.items():
             setattr(instance, k, v)
 
@@ -207,25 +207,26 @@ class Container(AbstractContainer):
     def _resolve_params(self, binding: TBinding, init_kwargs: KwargsDict) -> KwargsDict:
         needed_params = binding.get_concrete_params()
         resolved_params = {}
-        for name, annotation in needed_params.items():
+        for name, hint in needed_params.items():
             if name in init_kwargs:
                 resolved_params[name] = init_kwargs[name]
             else:
-                resolved_params[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
+                resolved_params[name] = self._make(hint.annotation, {}, parent=binding.concrete, parent_name=name)
         return resolved_params
 
     def _resolve_attrs(self,
+                       instance: Any,
                        binding: TBinding,
                        init_kwargs: KwargsDict,
                        resolved_params: KwargsDict,
                        ) -> KwargsDict:
-        needed_attrs = binding.get_concrete_attrs()
+        needed_attrs = binding.get_concrete_attrs(instance)
         resolved_attrs = {}
-        for name, annotation in needed_attrs.items():
+        for name, hint in needed_attrs.items():
             if name in resolved_params:
                 continue
             if name in init_kwargs:
                 resolved_attrs[name] = init_kwargs[name]
             else:
-                resolved_attrs[name] = self._make(annotation, {}, parent=binding.concrete, parent_name=name)
+                resolved_attrs[name] = self._make(hint.annotation, {}, parent=binding.concrete, parent_name=name)
         return resolved_attrs
