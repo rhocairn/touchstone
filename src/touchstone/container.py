@@ -16,6 +16,7 @@ from touchstone.bindings import (
     TAbstract,
     TBinding,
     TConcrete,
+    AnnotationHint,
 )
 from touchstone.exceptions import (
     BindingError,
@@ -126,13 +127,14 @@ class Container(AbstractContainer):
         """
         if init_kwargs is None:
             init_kwargs = {}
-        return self._make(abstract, init_kwargs, None, None)
+        return self._make(abstract, init_kwargs, None, None, AnnotationHint.NO_DEFAULT_VALUE)
 
     def _make(self,
               abstract: TAbstract,
               init_kwargs: KwargsDict,
               parent: Optional[TConcrete],
               parent_name: Optional[str],
+              default_value: Any,
               ) -> Any:
         if init_kwargs == {} and abstract is None:
             return None
@@ -140,7 +142,7 @@ class Container(AbstractContainer):
         if init_kwargs:
             binding = self._make_auto_binding(abstract, parent_name or str(abstract))
         else:
-            binding = self._resolve_binding(abstract, parent, parent_name)
+            binding = self._resolve_binding(abstract, parent, parent_name, default_value)
 
         if not init_kwargs and binding in self._instances:
             return self._instances[binding]
@@ -168,11 +170,15 @@ class Container(AbstractContainer):
                          abstract: TAbstract,
                          parent: Optional[TAbstract],
                          name: Optional[str],
+                         default_value: Any,
                          ) -> TBinding:
         if parent is not None:
             binding = self._resolve_contextual_binding(abstract, parent, name)
             if binding:
                 return binding
+
+        if default_value is not AnnotationHint.NO_DEFAULT_VALUE:
+            return self._make_default_vaulue_binding(abstract, parent, name, default_value)
 
         if abstract in self._bindings:
             return self._bindings[abstract]
@@ -184,6 +190,16 @@ class Container(AbstractContainer):
             return AutoBinding(abstract)
         except BindingError as e:
             raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
+
+    def _make_default_vaulue_binding(self, abstract: Optional[TAbstract], parent, name, default_value):
+         return ContextualBinding(abstract=abstract,
+                                  concrete=lambda: default_value,
+                                  lifetime_strategy=NEW_EVERY_TIME,
+                                  parent=parent,
+                                  parent_name=parent)
+
+    # def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
+    # parent: TConcrete, parent_name: Optional[str]) -> None:
 
     def _resolve_contextual_binding(self,
                                     abstract: TAbstract,
@@ -211,7 +227,9 @@ class Container(AbstractContainer):
             if name in init_kwargs:
                 resolved_params[name] = init_kwargs[name]
             else:
-                resolved_params[name] = self._make(hint.annotation, {}, parent=binding.concrete, parent_name=name)
+                resolved_params[name] = self._make(hint.annotation, {},
+                                                   parent=binding.concrete, parent_name=name,
+                                                   default_value=hint.default_value)
         return resolved_params
 
     def _resolve_attrs(self,
@@ -228,5 +246,7 @@ class Container(AbstractContainer):
             if name in init_kwargs:
                 resolved_attrs[name] = init_kwargs[name]
             else:
-                resolved_attrs[name] = self._make(hint.annotation, {}, parent=binding.concrete, parent_name=name)
+                resolved_attrs[name] = self._make(hint.annotation, {},
+                                                  parent=binding.concrete, parent_name=name,
+                                                  default_value=hint.default_value)
         return resolved_attrs

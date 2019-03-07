@@ -506,14 +506,104 @@ class TestContainer:
         assert isinstance(y.init_foo, X)
         assert not hasattr(y, 'foo')
 
-    @pytest.mark.xfail(reason="TODO: We need to make this pass!")  # TODO
-    def test_make_supports_optional_kwargs(self):
-        dct = {}
+    def test_make_optional_attr_injection(self):
+        class X:
+            pass
+
+        default_x = X()
 
         class Y:
-            def __init__(self, foo: dict = dct):
+            foo: X
+
+            def __init__(self):
+                self.foo = default_x
+
+        container = Container()
+        y = container.make(Y)
+        assert y.foo is default_x
+
+    def test_make_optional_attr_default_prioritized_over_explicit_binding(self):
+        class X:
+            pass
+
+        default_x = X()
+
+        class Y:
+            foo: X
+
+            def __init__(self):
+                self.foo = default_x
+
+        container = Container()
+        bound_x = X()
+        container.bind_instance(X, bound_x)
+        y = container.make(Y)
+        assert y.foo is default_x
+        assert y.foo is not bound_x
+
+    def test_make_optional_attr_contextual_binding_prioritized_over_default(self):
+        class X:
+            pass
+
+        default_x = X()
+
+        class Y:
+            foo: X
+
+            def __init__(self):
+                self.foo = default_x
+
+        container = Container()
+        bound_x = X()
+        container.bind_contextual(when=Y, wants=X, give=lambda: bound_x)
+        y = container.make(Y)
+        assert y.foo is not default_x
+        assert y.foo is bound_x
+
+    def test_make_optional_param_injection(self):
+        class X:
+            pass
+
+        default_x = X()
+
+        class Y:
+            def __init__(self, foo: X = default_x):
                 self.foo = foo
 
         container = Container()
         y = container.make(Y)
-        assert y.foo is dct
+        assert y.foo is default_x
+
+    def test_make_optional_param_injection_default_prioritized_over_explicit_binding(self):
+        class X:
+            pass
+
+        default_x = X()
+
+        class Y:
+            def __init__(self, foo: X = default_x):
+                self.foo = foo
+
+        container = Container()
+        bound_x = X()
+        container.bind_instance(X, bound_x)
+        y = container.make(Y)
+        assert y.foo is default_x
+        assert y.foo is not bound_x
+
+    def test_make_optional_param_contextual_binding_prioritized_over_default(self):
+        class X:
+            pass
+
+        default_x = X()
+
+        class Y:
+            def __init__(self, foo: X = default_x):
+                self.foo = foo
+
+        container = Container()
+        bound_x = X()
+        container.bind_contextual(when=Y, wants=X, give=lambda: bound_x)
+        y = container.make(Y)
+        assert y.foo is not default_x
+        assert y.foo is bound_x
