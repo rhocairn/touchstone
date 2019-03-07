@@ -48,7 +48,7 @@ class AnnotationHint:
     annotation: TAbstract
     default_value: Any
 
-    def has_default_value(self):
+    def has_default_value(self) -> bool:
         return self.default_value is not self.NO_DEFAULT_VALUE
 
 

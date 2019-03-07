@@ -168,7 +168,7 @@ class Container(AbstractContainer):
 
     def _resolve_binding(self,
                          abstract: TAbstract,
-                         parent: Optional[TAbstract],
+                         parent: Optional[TConcrete],
                          name: Optional[str],
                          default_value: Any,
                          ) -> TBinding:
@@ -177,8 +177,9 @@ class Container(AbstractContainer):
             if binding:
                 return binding
 
-        if default_value is not AnnotationHint.NO_DEFAULT_VALUE:
-            return self._make_default_vaulue_binding(abstract, parent, name, default_value)
+        binding = self._resolve_default_vaulue_binding(abstract, parent, name, default_value)
+        if binding:
+            return binding
 
         if abstract in self._bindings:
             return self._bindings[abstract]
@@ -191,12 +192,19 @@ class Container(AbstractContainer):
         except BindingError as e:
             raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
 
-    def _make_default_vaulue_binding(self, abstract: Optional[TAbstract], parent, name, default_value):
-        return ContextualBinding(abstract=abstract,
+    def _resolve_default_vaulue_binding(self,
+                                        abstract: TAbstract,
+                                        parent: Optional[TConcrete],
+                                        name: Optional[str],
+                                        default_value: Any, ) -> Optional[TBinding]:
+        if default_value is AnnotationHint.NO_DEFAULT_VALUE:
+            return None
+
+        return ContextualBinding(abstract=abstract,  # type: ignore
                                  concrete=lambda: default_value,
                                  lifetime_strategy=NEW_EVERY_TIME,
-                                 parent=parent,
-                                 parent_name=parent)
+                                 parent=abstract,
+                                 parent_name=name)
 
     # def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
     # parent: TConcrete, parent_name: Optional[str]) -> None:
