@@ -4,12 +4,12 @@ build: Dockerfile setup.py
 
 .PHONY: test
 test: build
-	docker-compose run app tox
+	docker-compose run --rm app tox
 
 .PHONY: shell
 shell: build
-	docker-compose run app bash
+	docker-compose run --rm app bash
 
 .PHONY: upload-dist
 upload-dist: test
-	docker-compose run app bash scripts/upload-dist.sh
+	docker-compose run --rm app bash scripts/upload-dist.sh
