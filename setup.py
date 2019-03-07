@@ -36,6 +36,12 @@ tests_requires = [
     'docutils',
 ]
 
+dist_requires = [
+    'setuptools >= 38.6.0',
+    'wheel >= 0.31.0',
+    'twine >= 1.11.0',
+]
+
 setup(
     name='touchstone',
     description="IoC framework driven by annotations and type hints",
@@ -53,6 +59,7 @@ setup(
     tests_require=tests_requires,
     extras_require={
         'tests': tests_requires,
+        'dist': dist_requires,
     },
     package_data={
         'touchstone': ['py.typed'],

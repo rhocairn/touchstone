@@ -9,3 +9,9 @@ test: build
 .PHONY: shell
 shell: build
 	docker-compose run app bash
+
+
+.PHONY: upload-dist
+upload-dist: build
+	docker-compose run app bash scripts/upload-dist.sh
+

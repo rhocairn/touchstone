@@ -42,7 +42,7 @@ COPY ./setup.py /app/
 RUN mkdir -p /app/src/touchstone \
     && echo '__version__ = "0.0.1-dev1"' > /app/src/touchstone/version.py \
     && touch /app/src/touchstone/__init__.py \
-    && pip install -e /app[tests]
+    && pip install -e /app[tests,dist]
 
 COPY . /app
 WORKDIR /app
