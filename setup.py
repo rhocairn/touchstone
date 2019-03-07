@@ -21,6 +21,7 @@ def find_version(*path: str) -> str:
         return version_match.group(1)
     raise RuntimeError("Unable to find version string.")
 
+
 # Read the README file
 with open(path.join(ROOTDIR, 'README.md'), encoding='utf-8') as fp:
     long_description = fp.read()
@@ -28,6 +29,7 @@ with open(path.join(ROOTDIR, 'README.md'), encoding='utf-8') as fp:
 install_requires = []  # type: list[str]
 
 tests_requires = [
+    'dataclasses',
     'pytest==4.*',
     'tox==3.*',
     'flake8==3.6.*',

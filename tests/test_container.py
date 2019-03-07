@@ -1,27 +1,26 @@
 import abc
 import re
-import sys
 from collections import namedtuple
 
+import pytest
+from dataclasses import dataclass
 from typing import (
     Callable,
+    ClassVar,
     IO,
     List,
+    NamedTuple,
     Type,
     TypeVar,
-    NamedTuple,
-    ClassVar,
 )
-
-import pytest
 
 from touchstone.container import (
     Container,
     SINGLETON,
 )
 from touchstone.exceptions import (
-    ResolutionError,
     BindingError,
+    ResolutionError,
 )
 
 
@@ -294,10 +293,7 @@ class TestContainer:
         assert y1.x is not x1
         assert y1.x is y2.x
 
-    @pytest.mark.skipif(sys.version_info < (3, 7), reason="requires dataclasses, added in python3.7")
     def test_make_supports_dataclasses(self):
-        from dataclasses import dataclass
-
         class X:
             pass
 
