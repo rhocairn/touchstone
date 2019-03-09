@@ -5,6 +5,8 @@ services:
       context: .
     volumes:
       - ./:/app
+      - ~/.ssh:/root/.ssh
+      - ~/.gitconfig:/root/.gitconfig
     environment:
       - TWINE_USERNAME
       - TWINE_PASSWORD
