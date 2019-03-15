@@ -126,3 +126,41 @@ assert isinstance(parent.child2, Child)
 assert parent.child1.name == 'her'
 assert parent.child2.name == 'him'
 ```
+
+
+## Django Support
+
+Now featuring Django support! New in v0.3.0
+
+1) Configure your instance of `touchstone.Container` however you see fit.
+2) In your main `settings.py`, set `TOUCHSTONE_CONTAINER_GETTER` to
+   the path to a callable that will return the instace of
+   `touchstone.Container` your app uses.
+
+To get injected properties in your class-based views:
+1) In your main `settings.py`, add `touchstone.django.InjectViewsMiddleware`
+   to your `MIDDLEWARE` list.
+2) Use class annotations on your class-based views. Cached Properties will
+   be added to your view classes so that they automatically resolve using
+   your configured touchstone container. For example:
+
+```python
+class MyView(View):
+    something: MyObject
+    def get(self, request):
+        # You can now access self.something!
+```
+
+To get injected properties in your middleware, you'll need to do a little
+more work because we haven't found a good way to hook into Django's middleware
+instantiation logic.
+```
+from touchstone.django import get_container, MagicInjectedProperties
+magic = MagicInjectedProperties(get_container())
+
+@magic.set_magic_properties
+class MyMixin:
+    something: MyObject
+    # define your mixin here...
+    # You'll be able to use `self.something` from within every instace method.
+```
