@@ -1,10 +1,20 @@
 Touchstone
 ==========
 
+.. contents::
+   :depth: 2
+   :backlinks: none
+
+What is Touchstone?
+-------------------
+
 Touchstone is an annotations-driven Inversion of Control container for
 Python 3.6 and above.
 
-`GitHub <https://github.com/gmaybrun/touchstone>`__
+Links:
+
+* `GitHub <https://github.com/gmaybrun/touchstone>`__
+
 
 Learn by Example
 ----------------
