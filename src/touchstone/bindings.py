@@ -1,18 +1,22 @@
 import abc
 import builtins
 import inspect
-
 import typing
-from dataclasses import dataclass
 from typing import (
     Any,
     Callable,
     Dict,
     Hashable,
     Optional,
+    Tuple,
 )
 
-from touchstone.exceptions import BindingError
+from dataclasses import dataclass
+
+from touchstone.exceptions import (
+    BindingError,
+    ResolutionError,
+)
 
 SINGLETON = 'singleton'
 NEW_EVERY_TIME = 'new_every_time'
@@ -44,9 +48,10 @@ def is_typing_classvar(obj: Any) -> bool:
 
 @dataclass
 class AnnotationHint:
-    NO_DEFAULT_VALUE = inspect.Parameter.empty
     annotation: TAbstract
     default_value: Any
+
+    NO_DEFAULT_VALUE = inspect.Parameter.empty
 
     def has_default_value(self) -> bool:
         return self.default_value is not self.NO_DEFAULT_VALUE
@@ -150,3 +155,102 @@ class ContextualBinding(AbstractBinding):
 
 
 TBinding = typing.Union[AutoBinding, SimpleBinding, ContextualBinding]
+
+
+class BindingResolver:
+    def __init__(self) -> None:
+        self._bindings: Dict[TAbstract, TBinding] = {}
+        self._contextual_bindings: Dict[Tuple[Optional[TAbstract], TAbstract, Optional[str]], ContextualBinding] = {}
+
+    def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str = NEW_EVERY_TIME) -> None:
+        """
+        Bind an `abstract` (an annotation) to a `concrete` (something which returns objects fulfilling that annotation).
+        If `lifetime_strategy` is set to `SINGLETON` then only one instance of the concrete implementation will be used.
+        """
+        self._bindings[abstract] = SimpleBinding(abstract, concrete, lifetime_strategy)
+
+    def bind_contextual(self, *,
+                        when: TConcrete,
+                        wants: Optional[TAbstract] = None,
+                        called: Optional[str] = None,
+                        give: TConcrete,
+                        lifetime_strategy: str = NEW_EVERY_TIME,
+                        ) -> None:
+        """
+        Used to create a *contextual* binding. This is used when you want to customize a specific class either by the
+        `abstract` (annotation) it needs, or by the name of an `__init__` kwarg.
+        """
+        abstract = wants
+        parent = when
+        parent_name = called
+        concrete = give
+        self._contextual_bindings[(abstract, parent, parent_name)] = ContextualBinding(
+            abstract=abstract,
+            concrete=concrete,
+            lifetime_strategy=lifetime_strategy,
+            parent=parent,
+            parent_name=parent_name,
+        )
+
+    def resolve_binding(self,
+                        abstract: TAbstract,
+                        parent: Optional[TConcrete] = None,
+                        name: Optional[str] = None,
+                        default_value: Any = AnnotationHint.NO_DEFAULT_VALUE,
+                        ) -> TBinding:
+        if parent is not None:
+            binding = self._resolve_contextual_binding(abstract, parent, name)
+            if binding:
+                return binding
+
+            binding = self._resolve_default_vaulue_binding(abstract, parent, name, default_value)
+            if binding:
+                return binding
+
+        if abstract in self._bindings:
+            return self._bindings[abstract]
+
+        return self.make_auto_binding(abstract, name)
+
+    def make_auto_binding(self, abstract: TAbstract, name: Optional[str]) -> TBinding:
+        try:
+            return AutoBinding(abstract)
+        except BindingError as e:
+            raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
+
+    def _resolve_default_vaulue_binding(self,
+                                        abstract: TAbstract,
+                                        parent: TConcrete,
+                                        name: Optional[str],
+                                        default_value: Any,
+                                        ) -> Optional[TBinding]:
+        if default_value is AnnotationHint.NO_DEFAULT_VALUE:
+            return None
+
+        return ContextualBinding(abstract=abstract,
+                                 concrete=lambda: default_value,
+                                 lifetime_strategy=NEW_EVERY_TIME,
+                                 parent=parent,
+                                 parent_name=name)
+
+    # def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
+    # parent: TConcrete, parent_name: Optional[str]) -> None:
+
+    def _resolve_contextual_binding(self,
+                                    abstract: TAbstract,
+                                    parent: TAbstract,
+                                    name: Optional[str],
+                                    ) -> Optional[TBinding]:
+        if abstract is inspect.Parameter.empty:
+            abstract = None  # type: ignore  # None *IS* hashable, mypy!
+
+        if (abstract, parent, name) in self._contextual_bindings:
+            return self._contextual_bindings[(abstract, parent, name)]
+        if (abstract, parent, None) in self._contextual_bindings:
+            return self._contextual_bindings[(abstract, parent, None)]
+        if (None, parent, name) in self._contextual_bindings:
+            binding = self._contextual_bindings[(None, parent, name)]
+            raise ResolutionError(f"{binding.parent} has contextual binding for param {binding.parent_name} but"
+                                  f" that binding is annotated as {abstract} and the contextual binding is missing"
+                                  f" the `wants` parameter")
+        return None

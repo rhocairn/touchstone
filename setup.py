@@ -45,6 +45,10 @@ dist_requires = [
     'twine >= 1.11.0',
 ]
 
+django_requires = [
+    'django == 2.*',
+]
+
 setup(
     name='touchstone',
     description="IoC framework driven by annotations and type hints",
@@ -63,6 +67,7 @@ setup(
     extras_require={
         'tests': tests_requires,
         'dist': dist_requires,
+        'django': django_requires,
     },
     package_data={
         'touchstone': ['py.typed'],
