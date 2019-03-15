@@ -172,7 +172,7 @@ class BindingResolver:
     def bind_contextual(self, *,
                         when: TConcrete,
                         wants: Optional[TAbstract] = None,
-                        called: Optional[str] = None,
+                        wants_name: Optional[str] = None,
                         give: TConcrete,
                         lifetime_strategy: str = NEW_EVERY_TIME,
                         ) -> None:
@@ -182,7 +182,7 @@ class BindingResolver:
         """
         abstract = wants
         parent = when
-        parent_name = called
+        parent_name = wants_name
         concrete = give
         self._contextual_bindings[(abstract, parent, parent_name)] = ContextualBinding(
             abstract=abstract,
