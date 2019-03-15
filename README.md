@@ -117,8 +117,8 @@ class Parent:
 
 
 container = Container()
-container.bind_contextual(when=Parent, wants=Child, called='child1', give=lambda: Child('her'))
-container.bind_contextual(when=Parent, wants=Child, called='child2', give=lambda: Child('him'))
+container.bind_contextual(when=Parent, wants=Child, wants_name='child1', give=lambda: Child('her'))
+container.bind_contextual(when=Parent, wants=Child, wants_name='child2', give=lambda: Child('him'))
 parent = container.make(Parent)
 
 assert isinstance(parent.child1, Child)

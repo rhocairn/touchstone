@@ -182,8 +182,8 @@ class TestContainer:
                 self.x2 = x2
 
         container = Container()
-        container.bind_contextual(when=Y, wants=X, called='x1', give=lambda: X('bar1'))
-        container.bind_contextual(when=Y, wants=X, called='x2', give=lambda: X('bar2'))
+        container.bind_contextual(when=Y, wants=X, wants_name='x1', give=lambda: X('bar1'))
+        container.bind_contextual(when=Y, wants=X, wants_name='x2', give=lambda: X('bar2'))
 
         y = container.make(Y)
         assert y.x1.foo == 'bar1'
@@ -200,8 +200,8 @@ class TestContainer:
                 self.x2 = x2
 
         container = Container()
-        container.bind_contextual(when=Y, called='x1', give=lambda: X('bar1'))
-        container.bind_contextual(when=Y, called='x2', give=lambda: X('bar2'))
+        container.bind_contextual(when=Y, wants_name='x1', give=lambda: X('bar1'))
+        container.bind_contextual(when=Y, wants_name='x2', give=lambda: X('bar2'))
 
         y = container.make(Y)
         assert y.x1.foo == 'bar1'
@@ -227,7 +227,7 @@ class TestContainer:
                 self.foo = foo
 
         container = Container()
-        container.bind_contextual(when=X, wants=str, called='foo', give=lambda: 'bar')
+        container.bind_contextual(when=X, wants=str, wants_name='foo', give=lambda: 'bar')
         x = container.make(X)
         assert x.foo == 'bar'
 
@@ -242,8 +242,8 @@ class TestContainer:
                 self.x2 = x2
 
         container = Container()
-        container.bind_contextual(when=Y, called='x1', give=lambda: X('foo'))
-        container.bind_contextual(when=Y, called='x2', give=lambda: X('bar'))
+        container.bind_contextual(when=Y, wants_name='x1', give=lambda: X('foo'))
+        container.bind_contextual(when=Y, wants_name='x2', give=lambda: X('bar'))
 
         with assert_raises(ResolutionError, Y):
             container.make(Y)
@@ -346,7 +346,7 @@ class TestContainer:
         Y = namedtuple('Y', ['x'])
 
         container = Container()
-        container.bind_contextual(when=Y, called='x', give=X)
+        container.bind_contextual(when=Y, wants_name='x', give=X)
         y = container.make(Y)
         assert isinstance(y.x, X)
 
@@ -420,7 +420,7 @@ class TestContainer:
         with assert_raises(ResolutionError, 'initial_data'):
             container.make(CachingFibonacci)
 
-        container.bind_contextual(when=MemoryStore, wants=dict, called='initial_data', give=lambda: {})
+        container.bind_contextual(when=MemoryStore, wants=dict, wants_name='initial_data', give=lambda: {})
         fib = container.make(CachingFibonacci)
         assert fib.calculate(6) == 8
 

@@ -35,7 +35,7 @@ class AbstractContainer(abc.ABC):
     def bind_contextual(self, *,
                         when: TConcrete,
                         wants: Optional[TAbstract] = None,
-                        called: Optional[str] = None,
+                        wants_name: Optional[str] = None,
                         give: TConcrete,
                         lifetime_strategy: str = NEW_EVERY_TIME,
                         ) -> None:
@@ -89,7 +89,7 @@ class Container(AbstractContainer):
     def bind_contextual(self, *,
                         when: TConcrete,
                         wants: Optional[TAbstract] = None,
-                        called: Optional[str] = None,
+                        wants_name: Optional[str] = None,
                         give: TConcrete,
                         lifetime_strategy: str = NEW_EVERY_TIME,
                         ) -> None:
@@ -97,7 +97,7 @@ class Container(AbstractContainer):
         Used to create a *contextual* binding. This is used when you want to customize a specific class either by the
         `abstract` (annotation) it needs, or by the name of an `__init__` kwarg.
         """
-        self.bindings.bind_contextual(when=when, wants=wants, called=called, give=give,
+        self.bindings.bind_contextual(when=when, wants=wants, wants_name=wants_name, give=give,
                                       lifetime_strategy=lifetime_strategy)
 
     def make(self, abstract: TAbstract, init_kwargs: Optional[KwargsDict] = None) -> Any:

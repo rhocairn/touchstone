@@ -143,7 +143,7 @@ class TestBindingResolver:
                 self.obj = obj
 
         bindings = BindingResolver()
-        bindings.bind_contextual(when=Thing, wants=MyAbc, called='obj', give=MyCls)
+        bindings.bind_contextual(when=Thing, wants=MyAbc, wants_name='obj', give=MyCls)
 
         binding = bindings.resolve_binding(MyAbc, parent=Thing, name='obj')
 
@@ -189,7 +189,7 @@ class TestBindingResolver:
                 self.obj = obj
 
         bindings = BindingResolver()
-        bindings.bind_contextual(when=Thing, called='obj', give=MyCls)
+        bindings.bind_contextual(when=Thing, wants_name='obj', give=MyCls)
 
         binding = bindings.resolve_binding(abstract=inspect.Parameter.empty, parent=Thing, name='obj')
 
@@ -212,7 +212,7 @@ class TestBindingResolver:
                 self.obj = obj
 
         bindings = BindingResolver()
-        bindings.bind_contextual(when=Thing, wants=MyAbc, called='obj', give=MyCls, lifetime_strategy=SINGLETON)
+        bindings.bind_contextual(when=Thing, wants=MyAbc, wants_name='obj', give=MyCls, lifetime_strategy=SINGLETON)
 
         binding = bindings.resolve_binding(MyAbc, parent=Thing, name='obj')
 
