@@ -5,20 +5,15 @@ from typing import (
     Sequence,
 )
 
-from django.conf import settings
 from django.http import (
     HttpRequest,
     HttpResponse,
 )
-from django.utils import module_loading
 
-from touchstone import Container
-from touchstone.django.properties import MagicInjectedProperties
-
-
-def get_container() -> Container:
-    container: Container = module_loading.import_string(settings.TOUCHSTONE_CONTAINER_GETTER)()
-    return container
+from touchstone.django.properties import (
+    MagicInjectedProperties,
+    get_container,
+)
 
 
 class InjectViewsMiddleware:

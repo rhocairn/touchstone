@@ -3,6 +3,8 @@ from typing import (
     Callable,
 )
 
+from django.conf import settings
+from django.utils import module_loading
 from django.utils.functional import cached_property
 from django.views import View
 
@@ -11,6 +13,11 @@ from touchstone.bindings import (
     TAbstract,
     TConcrete,
 )
+
+
+def get_container() -> Container:
+    container: Container = module_loading.import_string(settings.TOUCHSTONE_CONTAINER_GETTER)()
+    return container
 
 
 class MagicInjectedProperties:
