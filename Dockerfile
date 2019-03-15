@@ -1,4 +1,4 @@
-FROM debian:stretch AS py367
+FROM debian:stretch AS pythons
 
 ENV PYENV_ROOT="/.pyenv" \
     PATH="/.pyenv/bin:/.pyenv/shims:$PATH"
@@ -36,7 +36,7 @@ RUN git clone https://github.com/pyenv/pyenv.git /.pyenv \
 
 
 
-FROM py367 AS app
+FROM pythons AS app
 
 COPY ./setup.py /app/
 RUN mkdir -p /app/src/touchstone \

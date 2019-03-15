@@ -1,25 +1,21 @@
 import abc
-import inspect
 from typing import (
     Any,
     Dict,
     Optional,
-    Tuple,
+    Type,
 )
 
 from touchstone.bindings import (
     AnnotationHint,
-    AutoBinding,
-    ContextualBinding,
+    BindingResolver,
     NEW_EVERY_TIME,
     SINGLETON,
-    SimpleBinding,
     TAbstract,
     TBinding,
     TConcrete,
 )
 from touchstone.exceptions import (
-    BindingError,
     ResolutionError,
 )
 
@@ -41,7 +37,7 @@ class AbstractContainer(abc.ABC):
                         wants: Optional[TAbstract] = None,
                         called: Optional[str] = None,
                         give: TConcrete,
-                        lifetime_strategy: str = NEW_EVERY_TIME
+                        lifetime_strategy: str = NEW_EVERY_TIME,
                         ) -> None:
         pass
 
@@ -69,10 +65,9 @@ class Container(AbstractContainer):
         * A classmethod acting as a factory function
     """
 
-    def __init__(self) -> None:
-        self._bindings: Dict[TAbstract, TBinding] = {}
+    def __init__(self, biding_resolver_cls: Type[BindingResolver] = BindingResolver) -> None:
         self._instances: Dict[TBinding, Any] = {}
-        self._contextual_bindings: Dict[Tuple[Optional[TAbstract], TAbstract, Optional[str]], ContextualBinding] = {}
+        self.bindings = biding_resolver_cls()
         self.bind_instance(Container, self)
 
     def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str = NEW_EVERY_TIME) -> None:
@@ -80,7 +75,7 @@ class Container(AbstractContainer):
         Bind an `abstract` (an annotation) to a `concrete` (something which returns objects fulfilling that annotation).
         If `lifetime_strategy` is set to `SINGLETON` then only one instance of the concrete implementation will be used.
         """
-        self._bindings[abstract] = SimpleBinding(abstract, concrete, lifetime_strategy)
+        self.bindings.bind(abstract, concrete, lifetime_strategy)
 
     def bind_instance(self, abstract: TAbstract, instance: Any) -> None:
         """
@@ -89,30 +84,21 @@ class Container(AbstractContainer):
         If you have a method that returns a valid instance of the object, then use `bind` with
         `lifetime_strategy=SINGLETON` instead.
         """
-        self.bind(abstract, lambda: instance, SINGLETON)
+        self.bindings.bind(abstract, lambda: instance, SINGLETON)
 
     def bind_contextual(self, *,
                         when: TConcrete,
                         wants: Optional[TAbstract] = None,
                         called: Optional[str] = None,
                         give: TConcrete,
-                        lifetime_strategy: str = NEW_EVERY_TIME
+                        lifetime_strategy: str = NEW_EVERY_TIME,
                         ) -> None:
         """
         Used to create a *contextual* binding. This is used when you want to customize a specific class either by the
         `abstract` (annotation) it needs, or by the name of an `__init__` kwarg.
         """
-        abstract = wants
-        parent = when
-        parent_name = called
-        concrete = give
-        self._contextual_bindings[(abstract, parent, parent_name)] = ContextualBinding(
-            abstract=abstract,
-            concrete=concrete,
-            lifetime_strategy=lifetime_strategy,
-            parent=parent,
-            parent_name=parent_name,
-        )
+        self.bindings.bind_contextual(when=when, wants=wants, called=called, give=give,
+                                      lifetime_strategy=lifetime_strategy)
 
     def make(self, abstract: TAbstract, init_kwargs: Optional[KwargsDict] = None) -> Any:
         """
@@ -137,12 +123,13 @@ class Container(AbstractContainer):
               default_value: Any,
               ) -> Any:
         if init_kwargs == {} and abstract is None:
+            # A None instance is requested and there's no override in place, so return None.
             return None
 
         if init_kwargs:
-            binding = self._make_auto_binding(abstract, parent_name or str(abstract))
+            binding = self.bindings.make_auto_binding(abstract, parent_name or str(abstract))
         else:
-            binding = self._resolve_binding(abstract, parent, parent_name, default_value)
+            binding = self.bindings.resolve_binding(abstract, parent, parent_name, default_value)
 
         if not init_kwargs and binding in self._instances:
             return self._instances[binding]
@@ -165,68 +152,6 @@ class Container(AbstractContainer):
             self._instances[binding] = instance
 
         return instance
-
-    def _resolve_binding(self,
-                         abstract: TAbstract,
-                         parent: Optional[TConcrete],
-                         name: Optional[str],
-                         default_value: Any,
-                         ) -> TBinding:
-        if parent is not None:
-            binding = self._resolve_contextual_binding(abstract, parent, name)
-            if binding:
-                return binding
-
-        binding = self._resolve_default_vaulue_binding(abstract, parent, name, default_value)
-        if binding:
-            return binding
-
-        if abstract in self._bindings:
-            return self._bindings[abstract]
-
-        return self._make_auto_binding(abstract, name)
-
-    def _make_auto_binding(self, abstract: TAbstract, name: Optional[str]) -> TBinding:
-        try:
-            return AutoBinding(abstract)
-        except BindingError as e:
-            raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
-
-    def _resolve_default_vaulue_binding(self,
-                                        abstract: TAbstract,
-                                        parent: Optional[TConcrete],
-                                        name: Optional[str],
-                                        default_value: Any, ) -> Optional[TBinding]:
-        if default_value is AnnotationHint.NO_DEFAULT_VALUE:
-            return None
-
-        return ContextualBinding(abstract=abstract,  # type: ignore
-                                 concrete=lambda: default_value,
-                                 lifetime_strategy=NEW_EVERY_TIME,
-                                 parent=abstract,
-                                 parent_name=name)
-
-    # def __init__(self, abstract: Optional[TAbstract], concrete: TConcrete, lifetime_strategy: str,
-    # parent: TConcrete, parent_name: Optional[str]) -> None:
-
-    def _resolve_contextual_binding(self,
-                                    abstract: TAbstract,
-                                    parent: TAbstract,
-                                    name: Optional[str],
-                                    ) -> Optional[TBinding]:
-        if abstract is inspect.Parameter.empty:
-            abstract = None  # type: ignore  # None *IS* hashable, mypy!
-
-        if (abstract, parent, name) in self._contextual_bindings:
-            return self._contextual_bindings[(abstract, parent, name)]
-        if (abstract, parent, None) in self._contextual_bindings:
-            return self._contextual_bindings[(abstract, parent, None)]
-        if (None, parent, name) in self._contextual_bindings:
-            binding = self._contextual_bindings[(None, parent, name)]
-            raise ResolutionError(f"{binding.parent} has contextual binding for param {binding.parent_name} but"
-                                  " that binding is annotated as {abstract} and the contextual binding is missing "
-                                  "the `wants` parameter")
-        return None
 
     def _resolve_params(self, binding: TBinding, init_kwargs: KwargsDict) -> KwargsDict:
         needed_params = binding.get_concrete_params()
