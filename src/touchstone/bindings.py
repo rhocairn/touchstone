@@ -203,9 +203,9 @@ class BindingResolver:
             if binding:
                 return binding
 
-        binding = self._resolve_default_vaulue_binding(abstract, parent, name, default_value)
-        if binding:
-            return binding
+            binding = self._resolve_default_vaulue_binding(abstract, parent, name, default_value)
+            if binding:
+                return binding
 
         if abstract in self._bindings:
             return self._bindings[abstract]
@@ -220,7 +220,7 @@ class BindingResolver:
 
     def _resolve_default_vaulue_binding(self,
                                         abstract: TAbstract,
-                                        parent: Optional[TConcrete],
+                                        parent: TConcrete,
                                         name: Optional[str],
                                         default_value: Any,
                                         ) -> Optional[TBinding]:
