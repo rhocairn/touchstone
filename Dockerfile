@@ -25,6 +25,7 @@ RUN apt-get update \
         xz-utils \
         zip \
         zlib1g-dev \
+        ssh \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
