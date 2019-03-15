@@ -223,7 +223,6 @@ class TestBindingResolver:
         assert binding.parent_name == 'obj'
         assert binding.lifetime_strategy == SINGLETON
 
-
     def test_default_value_binding(self):
         class Thing:
             def __init__(self, obj: str = 'asd'):

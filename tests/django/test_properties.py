@@ -7,6 +7,7 @@ from touchstone.django import MagicInjectedProperties
 class MyAbc:
     pass
 
+
 class MyCls(MyAbc):
     pass
 

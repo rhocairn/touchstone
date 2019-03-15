@@ -1,7 +1,6 @@
 from unittest import mock
 from unittest.mock import MagicMock
 
-from django.test import RequestFactory
 from django.views import View
 
 from touchstone import Container
