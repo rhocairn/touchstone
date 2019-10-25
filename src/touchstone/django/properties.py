@@ -29,7 +29,10 @@ class MagicInjectedProperties:
         needed_attrs = binding.get_concrete_attrs(concrete)
         for name, hint in needed_attrs.items():
             prop = self._make_property(hint.annotation, binding.concrete, name, hint.default_value)
-            setattr(concrete, name, cached_property(prop, name))
+            cp = cached_property(prop, name)
+            if hasattr(cached_property, '__set_name__'):
+                cp.__set_name__(concrete, name=name)
+            setattr(concrete, name, cp)
         return concrete
 
     def _make_property(self, abstract: TAbstract, parent: TConcrete, name: str, default_value: Any) -> Callable:
