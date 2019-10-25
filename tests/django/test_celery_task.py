@@ -1,7 +1,7 @@
 from unittest.mock import patch
 
 from touchstone import Container
-from touchstone.celery.task import touchstone_task
+from touchstone.django.celery_task import touchstone_task
 
 
 class SampleOne:
@@ -17,7 +17,7 @@ class TaskFoo:
     sample_two: SampleTwo
 
 
-@patch('touchstone.celery.task.get_container')
+@patch('touchstone.django.celery_task.get_container')
 class TestTouchstoneTask:
     def test_touchstone_task(self, mock_container):
         mock_container.return_value = Container()
