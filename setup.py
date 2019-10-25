@@ -23,7 +23,7 @@ def find_version(*path: str) -> str:
 
 
 # Read the README file
-with open(path.join(ROOTDIR, 'README.md'), encoding='utf-8') as fp:
+with open(path.join(ROOTDIR, 'README.rst'), encoding='utf-8') as fp:
     long_description = fp.read()
 
 install_requires = [
@@ -53,7 +53,6 @@ setup(
     name='touchstone',
     description="IoC framework driven by annotations and type hints",
     long_description=long_description,
-    long_description_content_type='text/markdown',
     version=find_version('src', 'touchstone', 'version.py'),
     url='https://github.com/gmaybrun/touchstone',
     maintainer='gmaybrun@gmail.com',
