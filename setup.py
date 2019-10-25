@@ -50,6 +50,10 @@ django_requires = [
     'django == 2.*',
 ]
 
+celery_requires = [
+    'celery == 4.*',
+]
+
 setup(
     name='touchstone',
     description="IoC framework driven by annotations and type hints",
@@ -68,6 +72,7 @@ setup(
         'tests': tests_requires,
         'dist': dist_requires,
         'django': django_requires,
+        'django_celery': django_requires + celery_requires,
     },
     package_data={
         'touchstone': ['py.typed'],
