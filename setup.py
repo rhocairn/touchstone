@@ -28,6 +28,7 @@ with open(path.join(ROOTDIR, 'README.rst'), encoding='utf-8') as fp:
 
 install_requires = [
     'dataclasses',
+    'celery',
 ]
 
 tests_requires = [

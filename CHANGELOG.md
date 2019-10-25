@@ -1,5 +1,10 @@
 # Touchstone Changelog
 
+## 0.5.0
+**New Feature**
+* Added `touchstone_task` which is a wrapper around Celery Tasks so that you can inject
+properties via class variable annotations in Celery tasks.
+
 ## 0.4.1
 **Bug Fix**
 * `MagicInjectedProperties` uses Django's `cached_property` which [changed](https://github.com/django/django/commit/06076999026091cf007d8ea69146340a361259f8#diff-31c53995d28395e13d586859808522f6) 
