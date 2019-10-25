@@ -1,0 +1,18 @@
+[tool.black]
+line-length = 100
+target-version = ["py36"]
+
+
+[tool.isort]
+line_length = 100
+multi_line_output = "3"
+include_trailing_comma = true
+default_section = "FIRSTPARTY"
+
+
+[build-system]
+requires = [
+    "setuptools >= 40.0.4",
+    "wheel >= 0.31.0",
+]
+build-backend = 'setuptools.build_meta'
