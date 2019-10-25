@@ -29,8 +29,10 @@ container.bind(MyAbc, MyCls)
 class TestInjectViewsMiddleware:
     def test_process_view(self):
         view_func = MyView.as_view()
-        with mock.patch('touchstone.django.middleware.get_container', return_value=container):
-            with mock.patch('touchstone.django.middleware.MagicInjectedProperties') as mock_MagicInjectedProperties:
+        with mock.patch("touchstone.django.middleware.get_container", return_value=container):
+            with mock.patch(
+                "touchstone.django.middleware.MagicInjectedProperties"
+            ) as mock_MagicInjectedProperties:
                 middleware = InjectViewsMiddleware(MagicMock())
                 request = None
                 middleware.process_view(request, view_func, [], {})
