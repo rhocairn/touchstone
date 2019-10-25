@@ -32,7 +32,7 @@ class MagicInjectedProperties:
             cp = cached_property(prop, name)
             if hasattr(cached_property, '__set_name__'):
                 cp.__set_name__(concrete, name=name)
-            setattr(concrete, name, cached_property(prop, name))
+            setattr(concrete, name, cp)
         return concrete
 
     def _make_property(self, abstract: TAbstract, parent: TConcrete, name: str, default_value: Any) -> Callable:
