@@ -178,4 +178,89 @@ Django's middleware instantiation logic.
     class MyMixin:
         something: MyObject
         # define your mixin here...
-        # You'll be able to use `self.something` from within every instace method.
+        # You'll be able to use `self.something` from within every instance method.
+
+Celery Tasks
+------------
+
+Celery tasks can be applied to any callable with a decorator. For example:
+
+.. code:: python
+
+    class MyLogger:
+        def __init__(self, another_logger: AnotherLogger):
+            self.another_logger = another_logger
+
+        def log(self, msg):
+            print(msg)
+            self.another_logger.log(msg)
+
+    class ConcatStrings:
+        def concat_strings(self, string_one, string_two):
+            return string_one + string_two
+
+    @app.task
+    def log_messages(first_message, second_message):
+        concat_strings = ConcatStrings()
+        another_logger = AnotherLogger()
+        my_logger = MyLogger(another_logger)
+
+        total_msg = concat_strings.concat_strings(first_message, second_message)
+        my_logger.log(total_msg)
+
+    log_messages.apply_async(args=['hello', 'world'])
+
+However, if we want to refactor this code to make use of touchstone:
+
+.. code:: python
+
+    class MyLogger:
+        def __init__(self, another_logger: AnotherLogger):
+            self.another_logger = another_logger
+
+        def log(self, msg):
+            print(msg)
+            self.another_logger.log(msg)
+
+    class ConcatStrings:
+        def concat_strings(self, string_one, string_two):
+            return string_one + string_two
+
+    @app.task
+    def log_messages(first_message, second_message):
+        container = Container()
+        concat_strings = container.make(ConcatStrings)
+        my_logger = container.make(MyLogger)
+
+        total_msg = concat_strings.concat_strings(first_message, second_message)
+        my_class.log(my_logger)
+
+    log_messages.apply_async(args=['hello', 'world'])
+
+Each task would then have quite a bit of repeated code to create the container for each task and then
+make class instance we need.
+
+.. code:: python
+
+    class MyLogger:
+        def __init__(self, another_logger: AnotherLogger):
+            self.another_logger = another_logger
+
+        def log(self, msg):
+            print(msg)
+            self.another_logger.log(msg)
+
+    class ConcatStrings:
+        def concat_strings(self, string_one, string_two):
+            return string_one + string_two
+
+    @touchstone_task
+    class LogMessages:
+        concat_strings: ConcatStrings
+        my_class: MyClass
+
+        def run(self, first_message, second_message):
+            total_msg = self.concat_strings.concat_strings(first_message, second_message)
+            self.my_class.log(total_msg)
+
+    LogMessages.apply_async(args=['hello', 'world'])
