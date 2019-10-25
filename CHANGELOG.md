@@ -1,5 +1,14 @@
 # Touchstone Changelog
 
+## 1.0.0
+* Release of v1! No major changes to the functionality.
+**Bug Fixes**
+* `celery` no longer required on all installs. Install with the `django_celery` extras instead.
+
+**Improvements**
+* Added python 3.8 support
+* Added `isort` and `black` for code formatting
+
 ## 0.5.0
 **New Feature**
 * Added `touchstone_task` which is a wrapper around Celery Tasks so that you can inject

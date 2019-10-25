@@ -13,3 +13,8 @@ shell: build
 .PHONY: upload-dist
 upload-dist: test
 	docker-compose run --rm app bash scripts/upload-dist.sh
+
+.PHONY: reformat
+reformat: build
+	docker-compose run --rm app black src tests
+	docker-compose run --rm app isort --recursive src tests
