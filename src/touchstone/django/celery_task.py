@@ -3,10 +3,7 @@ from typing import Any, Type
 import celery
 from celery import Celery
 
-from touchstone.django import (
-    get_container,
-    MagicInjectedProperties,
-)
+from touchstone.django import MagicInjectedProperties, get_container
 
 
 def touchstone_task(task_cls: type) -> Type[celery.Task]:

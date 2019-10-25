@@ -1,23 +1,16 @@
 import abc
-from typing import (
-    Any,
-    Dict,
-    Optional,
-    Type,
-)
+from typing import Any, Dict, Optional, Type
 
 from touchstone.bindings import (
-    AnnotationHint,
-    BindingResolver,
     NEW_EVERY_TIME,
     SINGLETON,
+    AnnotationHint,
+    BindingResolver,
     TAbstract,
     TBinding,
     TConcrete,
 )
-from touchstone.exceptions import (
-    ResolutionError,
-)
+from touchstone.exceptions import ResolutionError
 
 KwargsDict = Dict[str, Any]
 
@@ -32,13 +25,15 @@ class AbstractContainer(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def bind_contextual(self, *,
-                        when: TConcrete,
-                        wants: Optional[TAbstract] = None,
-                        wants_name: Optional[str] = None,
-                        give: TConcrete,
-                        lifetime_strategy: str = NEW_EVERY_TIME,
-                        ) -> None:
+    def bind_contextual(
+        self,
+        *,
+        when: TConcrete,
+        wants: Optional[TAbstract] = None,
+        wants_name: Optional[str] = None,
+        give: TConcrete,
+        lifetime_strategy: str = NEW_EVERY_TIME,
+    ) -> None:
         pass
 
 
@@ -70,7 +65,9 @@ class Container(AbstractContainer):
         self.bindings = biding_resolver_cls()
         self.bind_instance(Container, self)
 
-    def bind(self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str = NEW_EVERY_TIME) -> None:
+    def bind(
+        self, abstract: TAbstract, concrete: TConcrete, lifetime_strategy: str = NEW_EVERY_TIME
+    ) -> None:
         """
         Bind an `abstract` (an annotation) to a `concrete` (something which returns objects fulfilling that annotation).
         If `lifetime_strategy` is set to `SINGLETON` then only one instance of the concrete implementation will be used.
@@ -86,19 +83,26 @@ class Container(AbstractContainer):
         """
         self.bindings.bind(abstract, lambda: instance, SINGLETON)
 
-    def bind_contextual(self, *,
-                        when: TConcrete,
-                        wants: Optional[TAbstract] = None,
-                        wants_name: Optional[str] = None,
-                        give: TConcrete,
-                        lifetime_strategy: str = NEW_EVERY_TIME,
-                        ) -> None:
+    def bind_contextual(
+        self,
+        *,
+        when: TConcrete,
+        wants: Optional[TAbstract] = None,
+        wants_name: Optional[str] = None,
+        give: TConcrete,
+        lifetime_strategy: str = NEW_EVERY_TIME,
+    ) -> None:
         """
         Used to create a *contextual* binding. This is used when you want to customize a specific class either by the
         `abstract` (annotation) it needs, or by the name of an `__init__` kwarg.
         """
-        self.bindings.bind_contextual(when=when, wants=wants, wants_name=wants_name, give=give,
-                                      lifetime_strategy=lifetime_strategy)
+        self.bindings.bind_contextual(
+            when=when,
+            wants=wants,
+            wants_name=wants_name,
+            give=give,
+            lifetime_strategy=lifetime_strategy,
+        )
 
     def make(self, abstract: TAbstract, init_kwargs: Optional[KwargsDict] = None) -> Any:
         """
@@ -115,13 +119,14 @@ class Container(AbstractContainer):
             init_kwargs = {}
         return self._make(abstract, init_kwargs, None, None, AnnotationHint.NO_DEFAULT_VALUE)
 
-    def _make(self,
-              abstract: TAbstract,
-              init_kwargs: KwargsDict,
-              parent: Optional[TConcrete],
-              parent_name: Optional[str],
-              default_value: Any,
-              ) -> Any:
+    def _make(
+        self,
+        abstract: TAbstract,
+        init_kwargs: KwargsDict,
+        parent: Optional[TConcrete],
+        parent_name: Optional[str],
+        default_value: Any,
+    ) -> Any:
         if init_kwargs == {} and abstract is None:
             # A None instance is requested and there's no override in place, so return None.
             return None
@@ -160,17 +165,18 @@ class Container(AbstractContainer):
             if name in init_kwargs:
                 resolved_params[name] = init_kwargs[name]
             else:
-                resolved_params[name] = self._make(hint.annotation, {},
-                                                   parent=binding.concrete, parent_name=name,
-                                                   default_value=hint.default_value)
+                resolved_params[name] = self._make(
+                    hint.annotation,
+                    {},
+                    parent=binding.concrete,
+                    parent_name=name,
+                    default_value=hint.default_value,
+                )
         return resolved_params
 
-    def _resolve_attrs(self,
-                       instance: Any,
-                       binding: TBinding,
-                       init_kwargs: KwargsDict,
-                       resolved_params: KwargsDict,
-                       ) -> KwargsDict:
+    def _resolve_attrs(
+        self, instance: Any, binding: TBinding, init_kwargs: KwargsDict, resolved_params: KwargsDict
+    ) -> KwargsDict:
         needed_attrs = binding.get_concrete_attrs(instance)
         resolved_attrs = {}
         for name, hint in needed_attrs.items():
@@ -179,7 +185,11 @@ class Container(AbstractContainer):
             if name in init_kwargs:
                 resolved_attrs[name] = init_kwargs[name]
             else:
-                resolved_attrs[name] = self._make(hint.annotation, {},
-                                                  parent=binding.concrete, parent_name=name,
-                                                  default_value=hint.default_value)
+                resolved_attrs[name] = self._make(
+                    hint.annotation,
+                    {},
+                    parent=binding.concrete,
+                    parent_name=name,
+                    default_value=hint.default_value,
+                )
         return resolved_attrs

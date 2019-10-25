@@ -1,27 +1,13 @@
 import abc
 import re
 from collections import namedtuple
-from typing import (
-    Callable,
-    ClassVar,
-    IO,
-    List,
-    NamedTuple,
-    Type,
-    TypeVar,
-)
+from dataclasses import dataclass
+from typing import IO, Callable, ClassVar, List, NamedTuple, Type, TypeVar
 
 import pytest
-from dataclasses import dataclass
 
-from touchstone.container import (
-    Container,
-    SINGLETON,
-)
-from touchstone.exceptions import (
-    BindingError,
-    ResolutionError,
-)
+from touchstone.container import SINGLETON, Container
+from touchstone.exceptions import BindingError, ResolutionError
 
 
 def assert_raises(exc_type, match):
@@ -73,7 +59,7 @@ class TestContainer:
 
         def make_x():
             x = X()
-            x.foo = 'bar'
+            x.foo = "bar"
             return x
 
         container = Container()
@@ -81,15 +67,15 @@ class TestContainer:
         y = container.make(Y)
         assert isinstance(y, Y)
         assert isinstance(y.x, X)
-        assert y.x.foo == 'bar'
+        assert y.x.foo == "bar"
 
     def test_make_string_argument_works(self):
         def make_n():
             return 5
 
         container = Container()
-        container.bind('n', make_n)
-        assert container.make('n') == 5
+        container.bind("n", make_n)
+        assert container.make("n") == 5
 
     def test_make_raises_if_not_concrete(self):
         class X(abc.ABC):
@@ -103,14 +89,14 @@ class TestContainer:
 
     def test_make_string_argument_in_subrequirement(self):
         class X:
-            def __init__(self, arg: 'n'):  # noqa: F821
+            def __init__(self, arg: "n"):  # noqa: F821
                 self.arg = arg
 
         def make_n():
             return 5
 
         container = Container()
-        container.bind('n', make_n)
+        container.bind("n", make_n)
         assert container.make(X).arg == 5
 
     def test_make_is_not_caching_instances(self):
@@ -128,8 +114,8 @@ class TestContainer:
                 self.foo = foo
 
         container = Container()
-        x = container.make(X, {'foo': 'bar'})
-        assert x.foo == 'bar'
+        x = container.make(X, {"foo": "bar"})
+        assert x.foo == "bar"
 
     def test_make_with_singletons(self):
         class X:
@@ -163,13 +149,13 @@ class TestContainer:
                 self.x = x
 
         container = Container()
-        container.bind_contextual(when=Y1, wants=X, give=lambda: X('bar1'))
-        container.bind_contextual(when=Y2, wants=X, give=lambda: X('bar2'))
+        container.bind_contextual(when=Y1, wants=X, give=lambda: X("bar1"))
+        container.bind_contextual(when=Y2, wants=X, give=lambda: X("bar2"))
 
         y1 = container.make(Y1)
         y2 = container.make(Y2)
-        assert y1.x.foo == 'bar1'
-        assert y2.x.foo == 'bar2'
+        assert y1.x.foo == "bar1"
+        assert y2.x.foo == "bar2"
 
     def test_make_supports_contextual_binding_with_varname(self):
         class X:
@@ -182,12 +168,12 @@ class TestContainer:
                 self.x2 = x2
 
         container = Container()
-        container.bind_contextual(when=Y, wants=X, wants_name='x1', give=lambda: X('bar1'))
-        container.bind_contextual(when=Y, wants=X, wants_name='x2', give=lambda: X('bar2'))
+        container.bind_contextual(when=Y, wants=X, wants_name="x1", give=lambda: X("bar1"))
+        container.bind_contextual(when=Y, wants=X, wants_name="x2", give=lambda: X("bar2"))
 
         y = container.make(Y)
-        assert y.x1.foo == 'bar1'
-        assert y.x2.foo == 'bar2'
+        assert y.x1.foo == "bar1"
+        assert y.x2.foo == "bar2"
 
     def test_make_supports_contextual_binding_with_only_varname(self):
         class X:
@@ -200,22 +186,51 @@ class TestContainer:
                 self.x2 = x2
 
         container = Container()
-        container.bind_contextual(when=Y, wants_name='x1', give=lambda: X('bar1'))
-        container.bind_contextual(when=Y, wants_name='x2', give=lambda: X('bar2'))
+        container.bind_contextual(when=Y, wants_name="x1", give=lambda: X("bar1"))
+        container.bind_contextual(when=Y, wants_name="x2", give=lambda: X("bar2"))
 
         y = container.make(Y)
-        assert y.x1.foo == 'bar1'
-        assert y.x2.foo == 'bar2'
+        assert y.x1.foo == "bar1"
+        assert y.x2.foo == "bar2"
 
-    @pytest.mark.parametrize('typ', [str, bytes, int, bool, bytearray, float, complex, dict, tuple, list, set,
-                                     frozenset, property, range, slice, object])
+    @pytest.mark.parametrize(
+        "typ",
+        [
+            str,
+            bytes,
+            int,
+            bool,
+            bytearray,
+            float,
+            complex,
+            dict,
+            tuple,
+            list,
+            set,
+            frozenset,
+            property,
+            range,
+            slice,
+            object,
+        ],
+    )
     def test_make_does_not_create_builtin_types(self, typ):
         container = Container()
         with assert_raises(ResolutionError, typ):
             container.make(typ)
 
-    @pytest.mark.parametrize('typ', [List[object], Type[int], TypeVar('T', int, float), Callable, IO, NamedTuple,
-                                     ClassVar[int]])
+    @pytest.mark.parametrize(
+        "typ",
+        [
+            List[object],
+            Type[int],
+            TypeVar("T", int, float),
+            Callable,
+            IO,
+            NamedTuple,
+            ClassVar[int],
+        ],
+    )
     def test_make_does_not_create_typing_hints(self, typ):
         container = Container()
         with assert_raises(ResolutionError, typ):
@@ -227,9 +242,9 @@ class TestContainer:
                 self.foo = foo
 
         container = Container()
-        container.bind_contextual(when=X, wants=str, wants_name='foo', give=lambda: 'bar')
+        container.bind_contextual(when=X, wants=str, wants_name="foo", give=lambda: "bar")
         x = container.make(X)
-        assert x.foo == 'bar'
+        assert x.foo == "bar"
 
     def test_make_does_not_support_varname_only_binding_if_annotations_used(self):
         class X:
@@ -242,8 +257,8 @@ class TestContainer:
                 self.x2 = x2
 
         container = Container()
-        container.bind_contextual(when=Y, wants_name='x1', give=lambda: X('foo'))
-        container.bind_contextual(when=Y, wants_name='x2', give=lambda: X('bar'))
+        container.bind_contextual(when=Y, wants_name="x1", give=lambda: X("foo"))
+        container.bind_contextual(when=Y, wants_name="x2", give=lambda: X("bar"))
 
         with assert_raises(ResolutionError, Y):
             container.make(Y)
@@ -316,18 +331,19 @@ class TestContainer:
         class X:
             pass
 
-        Y = namedtuple('Y', ['x'])
+        Y = namedtuple("Y", ["x"])
 
         container = Container()
-        with assert_raises(ResolutionError, 'x'):
+        with assert_raises(ResolutionError, "x"):
             container.make(Y)
 
     def test_make_raises_if_no_annotation(self):
         class X:
-            def __init__(self, foo): pass
+            def __init__(self, foo):
+                pass
 
         container = Container()
-        with assert_raises(ResolutionError, 'foo'):
+        with assert_raises(ResolutionError, "foo"):
             container.make(X)
 
     def test_make_handles_None_annotation(self):
@@ -343,10 +359,10 @@ class TestContainer:
         class X:
             pass
 
-        Y = namedtuple('Y', ['x'])
+        Y = namedtuple("Y", ["x"])
 
         container = Container()
-        container.bind_contextual(when=Y, wants_name='x', give=X)
+        container.bind_contextual(when=Y, wants_name="x", give=X)
         y = container.make(Y)
         assert isinstance(y.x, X)
 
@@ -356,14 +372,14 @@ class TestContainer:
                 self.foo = foo
 
         container = Container()
-        container.bind(X, lambda: X('foo'), SINGLETON)
+        container.bind(X, lambda: X("foo"), SINGLETON)
         x1 = container.make(X)
-        x2 = container.make(X, {'foo': 'bar'})
+        x2 = container.make(X, {"foo": "bar"})
         x3 = container.make(X)
 
-        assert x1.foo == 'foo'
+        assert x1.foo == "foo"
         assert x3 is x1
-        assert x2.foo == 'bar'
+        assert x2.foo == "bar"
         assert x2 is not x1
 
     def test_make_raises_if_given_invalid_explicit_kwargs(self):
@@ -372,21 +388,24 @@ class TestContainer:
                 self.foo = foo
 
         container = Container()
-        with assert_raises(ResolutionError, 'bar'):
-            container.make(X, {'foo': 'x', 'bar': 'y'})
+        with assert_raises(ResolutionError, "bar"):
+            container.make(X, {"foo": "x", "bar": "y"})
 
     def test_make_caching_fibonacci(self):
         """A more complete quasi-real-life test"""
 
         class KeyValueDatabase(abc.ABC):
             @abc.abstractmethod
-            def get(self, key): pass
+            def get(self, key):
+                pass
 
             @abc.abstractmethod
-            def has(self, key): pass
+            def has(self, key):
+                pass
 
             @abc.abstractmethod
-            def set(self, key, value): pass
+            def set(self, key, value):
+                pass
 
         class MemoryStore(KeyValueDatabase):
             def __init__(self, initial_data: dict):
@@ -417,10 +436,12 @@ class TestContainer:
             container.make(CachingFibonacci)
 
         container.bind(KeyValueDatabase, MemoryStore)
-        with assert_raises(ResolutionError, 'initial_data'):
+        with assert_raises(ResolutionError, "initial_data"):
             container.make(CachingFibonacci)
 
-        container.bind_contextual(when=MemoryStore, wants=dict, wants_name='initial_data', give=lambda: {})
+        container.bind_contextual(
+            when=MemoryStore, wants=dict, wants_name="initial_data", give=lambda: {}
+        )
         fib = container.make(CachingFibonacci)
         assert fib.calculate(6) == 8
 
@@ -475,8 +496,8 @@ class TestContainer:
 
         container = Container()
         y = container.make(Y)
-        assert not hasattr(Y, 'foo')
-        assert not hasattr(y, 'foo')
+        assert not hasattr(Y, "foo")
+        assert not hasattr(y, "foo")
 
     def test_make_init_kwargs_also_apply_to_attrs(self):
         class X:
@@ -487,8 +508,8 @@ class TestContainer:
 
         x1 = X()
         container = Container()
-        y = container.make(Y, {'foo': x1})
-        assert not hasattr(Y, 'foo')
+        y = container.make(Y, {"foo": x1})
+        assert not hasattr(Y, "foo")
         assert y.foo is x1
 
     def test_make_init_kwargs_params_used_before_attr(self):
@@ -504,7 +525,7 @@ class TestContainer:
         container = Container()
         y = container.make(Y)
         assert isinstance(y.init_foo, X)
-        assert not hasattr(y, 'foo')
+        assert not hasattr(y, "foo")
 
     def test_make_optional_attr_injection(self):
         class X:

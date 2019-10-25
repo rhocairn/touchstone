@@ -1,13 +1,13 @@
 import inspect
 
 from touchstone.bindings import (
+    NEW_EVERY_TIME,
+    SINGLETON,
     AbstractBinding,
     AnnotationHint,
     AutoBinding,
     BindingResolver,
     ContextualBinding,
-    NEW_EVERY_TIME,
-    SINGLETON,
     SimpleBinding,
 )
 
@@ -25,7 +25,7 @@ class ClassWithDefaults:
 
     def __init__(self, foo: dict = DCT):
         self.foo = foo
-        self.bar = 'barista'
+        self.bar = "barista"
 
 
 class MyBinding(AbstractBinding):
@@ -41,47 +41,46 @@ class MyBinding(AbstractBinding):
 
 
 class TestAbstractBinding:
-
     def test_make(self):
-        foo = {'foo': 'bar'}
+        foo = {"foo": "bar"}
         binding = MyBinding(ClassWithDefaults)
-        obj = binding.make({'foo': foo})
+        obj = binding.make({"foo": foo})
         assert isinstance(obj, ClassWithDefaults)
         assert obj.foo is foo
 
     def test_get_concrete_params(self):
         binding = MyBinding(ClassWithoutDefaults)
         params = binding.get_concrete_params()
-        assert set(params.keys()) == {'foo'}
-        assert params['foo'].annotation is dict
-        assert params['foo'].default_value is AnnotationHint.NO_DEFAULT_VALUE
-        assert not params['foo'].has_default_value()
+        assert set(params.keys()) == {"foo"}
+        assert params["foo"].annotation is dict
+        assert params["foo"].default_value is AnnotationHint.NO_DEFAULT_VALUE
+        assert not params["foo"].has_default_value()
 
     def test_get_concrete_attributes(self):
         binding = MyBinding(ClassWithoutDefaults)
         instance = ClassWithoutDefaults({})
         attrs = binding.get_concrete_attrs(instance)
-        assert set(attrs.keys()) == {'bar'}
-        assert attrs['bar'].annotation is str
-        assert attrs['bar'].default_value is AnnotationHint.NO_DEFAULT_VALUE
-        assert not attrs['bar'].has_default_value()
+        assert set(attrs.keys()) == {"bar"}
+        assert attrs["bar"].annotation is str
+        assert attrs["bar"].default_value is AnnotationHint.NO_DEFAULT_VALUE
+        assert not attrs["bar"].has_default_value()
 
     def test_get_concrete_params_with_defaults(self):
         binding = MyBinding(ClassWithDefaults)
         params = binding.get_concrete_params()
-        assert set(params.keys()) == {'foo'}
-        assert params['foo'].annotation is dict
-        assert params['foo'].default_value is ClassWithDefaults.DCT
-        assert params['foo'].has_default_value()
+        assert set(params.keys()) == {"foo"}
+        assert params["foo"].annotation is dict
+        assert params["foo"].default_value is ClassWithDefaults.DCT
+        assert params["foo"].has_default_value()
 
     def test_get_concrete_attributes_with_defaults(self):
         binding = MyBinding(ClassWithDefaults)
         instance = ClassWithDefaults()
         attrs = binding.get_concrete_attrs(instance)
-        assert set(attrs.keys()) == {'bar'}
-        assert attrs['bar'].annotation is str
-        assert attrs['bar'].default_value == 'barista'
-        assert attrs['bar'].has_default_value()
+        assert set(attrs.keys()) == {"bar"}
+        assert attrs["bar"].annotation is str
+        assert attrs["bar"].default_value == "barista"
+        assert attrs["bar"].has_default_value()
 
 
 class TestBindingResolver:
@@ -143,15 +142,15 @@ class TestBindingResolver:
                 self.obj = obj
 
         bindings = BindingResolver()
-        bindings.bind_contextual(when=Thing, wants=MyAbc, wants_name='obj', give=MyCls)
+        bindings.bind_contextual(when=Thing, wants=MyAbc, wants_name="obj", give=MyCls)
 
-        binding = bindings.resolve_binding(MyAbc, parent=Thing, name='obj')
+        binding = bindings.resolve_binding(MyAbc, parent=Thing, name="obj")
 
         assert isinstance(binding, ContextualBinding)
         assert binding.abstract is MyAbc
         assert binding.concrete is MyCls
         assert binding.parent is Thing
-        assert binding.parent_name == 'obj'
+        assert binding.parent_name == "obj"
         assert binding.lifetime_strategy == NEW_EVERY_TIME
 
     def test_contextual_binding_just_cls(self):
@@ -168,7 +167,7 @@ class TestBindingResolver:
         bindings = BindingResolver()
         bindings.bind_contextual(when=Thing, wants=MyAbc, give=MyCls)
 
-        binding = bindings.resolve_binding(MyAbc, parent=Thing, name='obj')
+        binding = bindings.resolve_binding(MyAbc, parent=Thing, name="obj")
 
         assert isinstance(binding, ContextualBinding)
         assert binding.abstract is MyAbc
@@ -189,15 +188,17 @@ class TestBindingResolver:
                 self.obj = obj
 
         bindings = BindingResolver()
-        bindings.bind_contextual(when=Thing, wants_name='obj', give=MyCls)
+        bindings.bind_contextual(when=Thing, wants_name="obj", give=MyCls)
 
-        binding = bindings.resolve_binding(abstract=inspect.Parameter.empty, parent=Thing, name='obj')
+        binding = bindings.resolve_binding(
+            abstract=inspect.Parameter.empty, parent=Thing, name="obj"
+        )
 
         assert isinstance(binding, ContextualBinding)
         assert binding.abstract is None
         assert binding.concrete is MyCls
         assert binding.parent is Thing
-        assert binding.parent_name == 'obj'
+        assert binding.parent_name == "obj"
         assert binding.lifetime_strategy == NEW_EVERY_TIME
 
     def test_contextual_binding_singleton(self):
@@ -212,28 +213,30 @@ class TestBindingResolver:
                 self.obj = obj
 
         bindings = BindingResolver()
-        bindings.bind_contextual(when=Thing, wants=MyAbc, wants_name='obj', give=MyCls, lifetime_strategy=SINGLETON)
+        bindings.bind_contextual(
+            when=Thing, wants=MyAbc, wants_name="obj", give=MyCls, lifetime_strategy=SINGLETON
+        )
 
-        binding = bindings.resolve_binding(MyAbc, parent=Thing, name='obj')
+        binding = bindings.resolve_binding(MyAbc, parent=Thing, name="obj")
 
         assert isinstance(binding, ContextualBinding)
         assert binding.abstract is MyAbc
         assert binding.concrete is MyCls
         assert binding.parent is Thing
-        assert binding.parent_name == 'obj'
+        assert binding.parent_name == "obj"
         assert binding.lifetime_strategy == SINGLETON
 
     def test_default_value_binding(self):
         class Thing:
-            def __init__(self, obj: str = 'asd'):
+            def __init__(self, obj: str = "asd"):
                 self.obj = obj
 
         bindings = BindingResolver()
-        binding = bindings.resolve_binding(str, parent=Thing, name='obj', default_value='asd')
+        binding = bindings.resolve_binding(str, parent=Thing, name="obj", default_value="asd")
 
         assert isinstance(binding, ContextualBinding)
         assert binding.abstract is str
-        assert binding.concrete() == 'asd'
+        assert binding.concrete() == "asd"
         assert binding.parent is Thing
-        assert binding.parent_name == 'obj'
+        assert binding.parent_name == "obj"
         assert binding.lifetime_strategy == NEW_EVERY_TIME

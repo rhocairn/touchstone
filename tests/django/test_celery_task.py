@@ -17,7 +17,7 @@ class TaskFoo:
     sample_two: SampleTwo
 
 
-@patch('touchstone.django.celery_task.get_container')
+@patch("touchstone.django.celery_task.get_container")
 class TestTouchstoneTask:
     def test_touchstone_task(self, mock_container):
         mock_container.return_value = Container()

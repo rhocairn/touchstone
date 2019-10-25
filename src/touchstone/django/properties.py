@@ -1,7 +1,4 @@
-from typing import (
-    Any,
-    Callable,
-)
+from typing import Any, Callable
 
 from django.conf import settings
 from django.utils import module_loading
@@ -9,10 +6,7 @@ from django.utils.functional import cached_property
 from django.views import View
 
 from touchstone import Container
-from touchstone.bindings import (
-    TAbstract,
-    TConcrete,
-)
+from touchstone.bindings import TAbstract, TConcrete
 
 
 def get_container() -> Container:
@@ -30,12 +24,14 @@ class MagicInjectedProperties:
         for name, hint in needed_attrs.items():
             prop = self._make_property(hint.annotation, binding.concrete, name, hint.default_value)
             cp = cached_property(prop, name)
-            if hasattr(cached_property, '__set_name__'):
+            if hasattr(cached_property, "__set_name__"):
                 cp.__set_name__(concrete, name=name)
             setattr(concrete, name, cp)
         return concrete
 
-    def _make_property(self, abstract: TAbstract, parent: TConcrete, name: str, default_value: Any) -> Callable:
+    def _make_property(
+        self, abstract: TAbstract, parent: TConcrete, name: str, default_value: Any
+    ) -> Callable:
         container = self.container
 
         def prop(self: View) -> Any:

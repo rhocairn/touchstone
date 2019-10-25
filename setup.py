@@ -26,15 +26,16 @@ def find_version(*path: str) -> str:
 with open(path.join(ROOTDIR, 'README.rst'), encoding='utf-8') as fp:
     long_description = fp.read()
 
-install_requires = [
+basic_install_requires = [
     'dataclasses',
-    'celery',
 ]
 
 tests_requires = [
-    'pytest==4.*',
-    'tox==3.*',
-    'flake8==3.6.*',
+    'pytest ==5.*',
+    'tox ==3.*',
+    'black ==19.3b0',
+    'isort ==4.*',
+    'flake8 ==3.6.*',
     'flake8-tuple',
     'mypy',
     'docutils',
@@ -66,7 +67,7 @@ setup(
     package_dir={'': 'src'},
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob('src/*.py')],
     zip_safe=True,
-    install_requires=install_requires,
+    install_requires=basic_install_requires,
     tests_require=tests_requires,
     extras_require={
         'tests': tests_requires,
@@ -78,13 +79,14 @@ setup(
         'touchstone': ['py.typed'],
     },
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Natural Language :: English',
         'Operating System :: OS Independent',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Object Brokering',
         'Topic :: Utilities',

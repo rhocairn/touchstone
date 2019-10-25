@@ -30,8 +30,9 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN git clone https://github.com/pyenv/pyenv.git /.pyenv \
-    && pyenv install 3.6.8 \
-    && pyenv install 3.7.2 \
+    && pyenv install 3.6.9 \
+    && pyenv install 3.7.4 \
+    && pyenv install 3.8.0 \
     && pyenv global $(pyenv versions --bare) \
     && pyenv rehash
 
