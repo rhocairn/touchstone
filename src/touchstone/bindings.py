@@ -213,7 +213,7 @@ class BindingResolver:
             if binding:
                 return binding
 
-            binding = self._resolve_default_vaulue_binding(abstract, parent, name, default_value)
+            binding = self._resolve_default_value_binding(abstract, parent, name, default_value)
             if binding:
                 return binding
 
@@ -228,7 +228,7 @@ class BindingResolver:
         except BindingError as e:
             raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
 
-    def _resolve_default_vaulue_binding(
+    def _resolve_default_value_binding(
         self, abstract: TAbstract, parent: TConcrete, name: Optional[str], default_value: Any
     ) -> Optional[TBinding]:
         if default_value is AnnotationHint.NO_DEFAULT_VALUE:
