@@ -1,7 +1,27 @@
 # Touchstone Changelog
 
+## 2.0.0
+**New Features**
+* Magic Properties now call `get_container()` at call-time:
+  * The Django `MagicInjectedProperties` class had some issues. It required you to
+    inject the `Container` instance at the time that you use the decorator which makes
+    writing tests very difficult -- you can't mock the container or have different
+    bindings in unit tests, for instance. 
+  * Now, the bound properties call `get_container()` at the latest possible moment,
+    allowing you to mock your `get_container` at any point before using the 
+    injected properties are used in your test.
+  * As a part of this change, we now use our own `MagicProperty` class instead
+    of re-using Django's `cached_property` implementation.
+  * This also resulted in a breaking change to the magic properties API (see below).
+    
+**Breaking Changes**
+* Instead of calling (or decorating with) 
+  `MagicInjectedProperties(container).inject_magic_properties`,
+  you simply now call (or decorate with) `inject_magic_properties`
+
 ## 1.0.0
 * Release of v1! No major changes to the functionality.
+
 **Bug Fixes**
 * `celery` no longer required on all installs. Install with the `django_celery` extras instead.
 
