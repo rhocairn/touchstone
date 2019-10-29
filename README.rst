@@ -148,6 +148,7 @@ Now featuring Django support! New in v0.3.0
 * In your main ``settings.py``, set ``TOUCHSTONE_CONTAINER_GETTER`` to
   the path to a callable that will return the singleton instance of
   ``touchstone.Container`` your app uses.
+
   * Note that your ``getter`` should build the ``Container`` precisely once, and
     then return that same ``Container`` on all subsequent calls. Build it as a
     singleton.
