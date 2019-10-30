@@ -1,5 +1,10 @@
 # Touchstone Changelog
 
+## 2.0.1
+**Bug Fixes*
+* Fix a but where the `InjectViewsMiddleware` Django middleware doesn't work
+  on Django Rest Framework (DRF) style ViewSets.
+
 ## 2.0.0
 **New Features**
 * Magic Properties now call `get_container()` at call-time:

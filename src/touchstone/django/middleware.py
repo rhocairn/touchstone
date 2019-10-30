@@ -19,7 +19,10 @@ class InjectViewsMiddleware:
         view_args: Sequence[Any],
         view_kwargs: Mapping[str, Any],
     ) -> None:
-        if not hasattr(view_func, "view_class"):
-            return
+        if hasattr(view_func, "view_class"):
+            # Vanilla Django ViewSet.as_view() puts the view's class in `view_class`
+            inject_magic_properties(view_func.view_class)
+        elif hasattr(view_func, "cls"):
+            # DRF overrides that behavior and puts the view's class in `cls`
+            inject_magic_properties(view_func.cls)
 
-        inject_magic_properties(view_func.view_class)
