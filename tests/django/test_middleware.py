@@ -33,7 +33,7 @@ class TestInjectViewsMiddleware:
     def test_process_view_django_style(self):
         view_func = DjangoView.as_view()
         with mock.patch(
-                "touchstone.django.middleware.inject_magic_properties"
+            "touchstone.django.middleware.inject_magic_properties"
         ) as mock_inject_magic_properties:
             middleware = InjectViewsMiddleware(MagicMock())
             request = None
@@ -42,10 +42,10 @@ class TestInjectViewsMiddleware:
         mock_inject_magic_properties.assert_called_once_with(DjangoView)
 
     def test_process_view_drf_style(self):
-        view_func = DRFViewSet.as_view({'get': 'retrieve'})
+        view_func = DRFViewSet.as_view({"get": "retrieve"})
 
         with mock.patch(
-                "touchstone.django.middleware.inject_magic_properties"
+            "touchstone.django.middleware.inject_magic_properties"
         ) as mock_inject_magic_properties:
             middleware = InjectViewsMiddleware(MagicMock())
             request = None

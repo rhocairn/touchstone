@@ -25,4 +25,3 @@ class InjectViewsMiddleware:
         elif hasattr(view_func, "cls"):
             # DRF overrides that behavior and puts the view's class in `cls`
             inject_magic_properties(view_func.cls)
-
