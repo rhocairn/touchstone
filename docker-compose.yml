@@ -10,3 +10,4 @@ services:
     environment:
       - TWINE_USERNAME
       - TWINE_PASSWORD
+      - DJANGO_SETTINGS_MODULE=tests.django_settings
