@@ -50,6 +50,9 @@ dist_requires = [
 django_requires = [
     'django == 2.*',
 ]
+drf_requires = [
+    'djangorestframework==3.*',
+]
 
 celery_requires = [
     'celery == 4.*',
@@ -73,6 +76,7 @@ setup(
         'tests': tests_requires,
         'dist': dist_requires,
         'django': django_requires,
+        'djangorestframework': django_requires + drf_requires,
         'django_celery': django_requires + celery_requires,
     },
     package_data={

@@ -45,7 +45,7 @@ RUN mkdir -p /app/src/touchstone \
     && echo '__version__ = "0.0.1-dev1"' > /app/src/touchstone/version.py \
     && touch /app/README.rst \
     && touch /app/src/touchstone/__init__.py \
-    && pip install -e /app[tests,dist,django,django_celery]
+    && pip install -e /app[tests,dist,django,django_celery,djangorestframework]
 
 WORKDIR /app
 COPY . /app
