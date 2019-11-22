@@ -628,3 +628,23 @@ class TestContainer:
         y = container.make(Y)
         assert y.foo is not default_x
         assert y.foo is bound_x
+
+    def test_binding_to_method_with_return_annotation(self):
+        """
+        This is a regression test.
+
+        There was a bug where a return annotation caused an infinite recursion.
+        """
+
+        class MyCls:
+            def __init__(self, name: str) -> None:
+                self.name = name
+
+        def make_foo() -> MyCls:
+            return MyCls("rho")
+
+        container = Container()
+        container.bind(MyCls, make_foo)
+        obj = container.make(MyCls)
+        assert isinstance(obj, MyCls)
+        assert obj.name == "rho"

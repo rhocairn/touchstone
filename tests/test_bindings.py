@@ -56,7 +56,7 @@ class TestAbstractBinding:
         assert params["foo"].default_value is AnnotationHint.NO_DEFAULT_VALUE
         assert not params["foo"].has_default_value()
 
-    def test_get_concrete_attributes(self):
+    def test_get_concrete_attrs(self):
         binding = MyBinding(ClassWithoutDefaults)
         instance = ClassWithoutDefaults({})
         attrs = binding.get_concrete_attrs(instance)
@@ -73,7 +73,7 @@ class TestAbstractBinding:
         assert params["foo"].default_value is ClassWithDefaults.DCT
         assert params["foo"].has_default_value()
 
-    def test_get_concrete_attributes_with_defaults(self):
+    def test_get_concrete_attrs_with_defaults(self):
         binding = MyBinding(ClassWithDefaults)
         instance = ClassWithDefaults()
         attrs = binding.get_concrete_attrs(instance)
@@ -81,6 +81,17 @@ class TestAbstractBinding:
         assert attrs["bar"].annotation is str
         assert attrs["bar"].default_value == "barista"
         assert attrs["bar"].has_default_value()
+
+    def test_get_concrete_attrs_with_return_annotation(self):
+        class SimpleClass:
+            pass
+
+        def maker() -> SimpleClass:
+            pass
+
+        binding = SimpleBinding(SimpleClass, maker, NEW_EVERY_TIME)
+        attrs = binding.get_concrete_attrs(maker)
+        assert attrs == {}
 
 
 class TestBindingResolver:

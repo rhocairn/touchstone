@@ -78,15 +78,28 @@ class AbstractBinding(abc.ABC):
         Excludes ClassVar typehints and excludes annotations that exist as attributes on the concrete class itself.
         """
         try:
+            needed_attrs = {
+                param: annotation
+                for param, annotation in self.concrete.__annotations__.items()
+                if self._is_needed_attr(param, annotation)
+            }
             return {
                 param: AnnotationHint(
                     annotation, getattr(instance, param, AnnotationHint.NO_DEFAULT_VALUE)
                 )
-                for param, annotation in self.concrete.__annotations__.items()
-                if not hasattr(self.concrete, param) and not is_typing_classvar(annotation)
+                for param, annotation in needed_attrs.items()
             }
         except AttributeError:
             return {}
+
+    def _is_needed_attr(self, param: str, annotation: TAbstract) -> bool:
+        if param == "return":
+            return False
+        if hasattr(self.concrete, param):
+            return False
+        if is_typing_classvar(annotation):
+            return False
+        return True
 
 
 class SimpleBinding(AbstractBinding):
@@ -115,7 +128,7 @@ class AutoBinding(AbstractBinding):
             or is_builtin(abstract)
             or is_typing(abstract)
         ):
-            raise BindingError(f"Cannot create auto-binding for typing type {abstract}")
+            raise BindingError(f"Cannot create auto-binding for type {abstract}")
         self.abstract = abstract
         self.concrete: TConcrete = abstract
 

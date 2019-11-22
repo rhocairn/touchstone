@@ -1,5 +1,19 @@
 # Touchstone Changelog
 
+## 2.0.2
+**Bug Fixes**
+* Fixed a bug where annotation a return value on a concrete implementation would 
+  cause infinite recursion. The following snippet exemplifies the bug that was fixed:
+  ```
+  class MyClass: pass
+  def make_obj() -> MyClass:
+    return MyClass()
+    
+  container = Container()
+  container.bind(MyClass, make_obj)
+  container.make(MyClass)  # infinite recursion
+  ```
+
 ## 2.0.1
 **Bug Fixes*
 * Fix a bug where the `InjectViewsMiddleware` Django middleware doesn't work
