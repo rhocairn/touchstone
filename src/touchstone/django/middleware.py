@@ -1,7 +1,6 @@
 from typing import Any, Callable, Mapping, Sequence
 
 from django.http import HttpRequest, HttpResponse
-
 from touchstone.django.properties import inject_magic_properties
 
 

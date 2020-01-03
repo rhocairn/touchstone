@@ -2,7 +2,6 @@ from typing import Any, Optional, TypeVar
 
 from django.conf import settings
 from django.utils import module_loading
-
 from touchstone import Container
 from touchstone.bindings import AutoBinding, TAbstract
 

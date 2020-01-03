@@ -132,7 +132,9 @@ class Container(AbstractContainer):
             return None
 
         if init_kwargs:
-            binding = self.bindings.make_auto_binding(abstract, parent_name or str(abstract))
+            binding = self.bindings.make_auto_binding(
+                abstract, parent_name or str(abstract), parent
+            )
         else:
             binding = self.bindings.resolve_binding(abstract, parent, parent_name, default_value)
 

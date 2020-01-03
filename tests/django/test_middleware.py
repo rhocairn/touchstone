@@ -3,7 +3,6 @@ from unittest.mock import MagicMock
 
 from django.views import View
 from rest_framework.viewsets import ViewSet
-
 from touchstone.django import InjectViewsMiddleware
 
 

@@ -1,7 +1,6 @@
 from unittest.mock import patch
 
 import pytest
-
 from touchstone import Container
 from touchstone.bindings import AnnotationHint
 from touchstone.django.properties import MagicProperty, inject_magic_properties

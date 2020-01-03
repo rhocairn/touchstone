@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from typing import IO, Callable, ClassVar, List, NamedTuple, Type, TypeVar
 
 import pytest
-
 from touchstone.container import SINGLETON, Container
 from touchstone.exceptions import BindingError, ResolutionError
 

@@ -7,7 +7,10 @@ target-version = ["py36"]
 line_length = 100
 multi_line_output = "3"
 include_trailing_comma = true
-default_section = "FIRSTPARTY"
+default_section = "THIRDPARTY"
+known_first_party = "citadel"
+known_tests="tests"
+sections = "FUTURE,STDLIB,THIRDPARTY,FIRSTPARTY,LOCALFOLDER,TESTS"
 
 
 [build-system]

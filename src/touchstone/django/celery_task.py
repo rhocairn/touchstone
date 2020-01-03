@@ -2,7 +2,6 @@ from typing import Any, Type
 
 import celery
 from celery import Celery
-
 from touchstone.django import get_container, inject_magic_properties
 
 
