@@ -1,5 +1,9 @@
 # Touchstone Changelog
 
+## 2.0.3
+**Bug Fixes**
+* Fixed inaccurate error message when unable to create automatic bindings.
+
 ## 2.0.2
 **Bug Fixes**
 * Fixed a bug where annotation a return value on a concrete implementation would 
