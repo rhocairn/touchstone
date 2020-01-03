@@ -233,13 +233,20 @@ class BindingResolver:
         if abstract in self._bindings:
             return self._bindings[abstract]
 
-        return self.make_auto_binding(abstract, name)
+        return self.make_auto_binding(abstract, name, parent)
 
-    def make_auto_binding(self, abstract: TAbstract, name: Optional[str]) -> TBinding:
+    def make_auto_binding(
+        self, abstract: TAbstract, name: Optional[str], parent: Optional[TConcrete] = None
+    ) -> TBinding:
         try:
             return AutoBinding(abstract)
         except BindingError as e:
-            raise ResolutionError(f"Can't resolve {name} requirement for {abstract}") from e
+            if parent is None:
+                raise ResolutionError(f"Can't resolve {name}: {abstract}") from e
+            else:
+                raise ResolutionError(
+                    f"Can't resolve {name}: {abstract}, which is required by {parent}"
+                ) from e
 
     def _resolve_default_value_binding(
         self, abstract: TAbstract, parent: TConcrete, name: Optional[str], default_value: Any
